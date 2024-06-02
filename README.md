@@ -6,7 +6,7 @@ Welcome to the repository for the project associated with the publication **"Nov
 
 ## Repository Overview
 
-This repository is currently under development, and the code will be made available soon. Stay tuned for updates.
+This repository is currently under development, and the code will be made available soon. **Stay tuned for updates**.
 
 ## Project Description
 
@@ -14,9 +14,9 @@ The purpose of this project is to introduce and quantify a new metric called Nov
 
 ## Key Features
 
-- **Data Analysis:** Tools for analyzing exploration behavior in the Elevated Plus Maze.
-- **Visualization:** Methods to visualize the exploration patterns and results.
-- **Quantification:** Metrics to quantify anxiety-like behavior based on exploration growth.
+- **Pre-processing:** Pre-process coordinates into Novel Exploration Growth over time
+- **Bayesian Change-point Analysis** Localise change-points into time series to evaluate phasic nature of exploration
+- **Bayesian Generalised Additive Model Analysis** Compare effects of interest using GAM models
 
 ## Usage
 
@@ -34,11 +34,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For any questions or feedback, please open an issue in this repository or contact us at [your email address].
+For any questions or feedback, please open an issue in this repository or contact us at mattdzelko@gmail.com.
 
 ---
-
-Stay tuned for updates and the release of the code!
 
 # NEG
 Novel Exploration Growth
