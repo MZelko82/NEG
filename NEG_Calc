@@ -4,11 +4,6 @@ author: "Matt Zelko"
 format: html
 ---
 
-# Introduction
-
-This document analyzes exploration behavior in an Elevated Plus Maze.
-
-# Load Packages
 
 ```{r}
 # Load necessary packages
