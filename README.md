@@ -6,7 +6,7 @@ Welcome to the repository for the project associated with the publication **"Nov
 
 ## Repository Overview
 
-This repository is currently under development, and the code will be made available soon. **Stay tuned for updates**.
+- **NEG_Calc:** Processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed)
 
 ## Project Description
 
@@ -37,6 +37,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 For any questions or feedback, please open an issue in this repository or contact us at mattdzelko@gmail.com.
 
 ---
-
-# NEG
-Novel Exploration Growth
