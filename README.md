@@ -15,8 +15,10 @@ The purpose of this project is to introduce and quantify a new metric called Nov
 ## Key Features
 
 - **Pre-processing:** Pre-process coordinates into Novel Exploration Growth over time
-- **Bayesian Change-point Analysis** Localise change-points into time series to evaluate phasic nature of exploration
-- **Bayesian Generalised Additive Model Analysis** Compare effects of interest using GAM models
+- **Bayesian Change-point Analysis (Coming Soon)** Localise change-points into time series to evaluate phasic nature of exploration
+    - This is completed primarily through the [mcp](https://lindeloev.github.io/mcp/) package  
+- **Bayesian Generalised Additive Model Analysis (Coming Soon)** Compare effects of interest using GAM models
+    - This is completed primarily through the [brms](https://paul-buerkner.github.io/brms/) and [mgcv](https://www.maths.ed.ac.uk/~swood34/mgcv/) packages   
 
 ## Usage
 
