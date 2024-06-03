@@ -7,6 +7,7 @@ Welcome to the repository for the project associated with the publication **"Nov
 ## Repository Overview
 
 - **NEG_Calc:** Processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed)
+- **XYTest.csv:** CSV file for testing NEG_Calc and to show required raw data strcture including column names
 
 ## Project Description
 
