@@ -31,7 +31,7 @@ The code and analysis tools will be provided soon. Instructions on how to use th
 If you use this code or find the results of our research helpful, please cite our publication:
 
 > Zelko, M; Robinson, S.R; Hill-Yardin, E, Nasser, H. "Novel Exploration Growth Quantifies Anxiety-like Behaviour in the Elevated Plus Maze,".
-> Preprint available at https://biorxiv.org/cgi/content/short/2024.06.10.598202v1
+> Preprint available at https://biorxiv.org/cgi/content/short/2024.06.10.598202v2
 
 ## License
 
