@@ -1,6 +1,16 @@
+---
+title: "MCP_Comp"
+format: html
+editor: visual
+---
 
-#### This code demonstrates how to build and compare single and dual phase model data using mcp
-#### It includes the model specifications, priors, predictive checks and leave-one-out cross validation comparisons used to fit and compare these models
+# Bayesian Change Points Modelling and Comparison 
+# Author: Matt Zelko
+# R x64 4.4.0
+# RStudio 2024.04.2+764 "Chocolate Cosmos" Release (e4392fc9ddc21961fd1d0efd47484b43f07a4177, 2024-06-05) for windows
+# Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) RStudio/2024.04.2+764 Chrome/120.0.6099.291 Electron/28.3.1 Safari/537.36, Quarto 1.4.549 (C:/Program Files/Quarto/bin/quarto.exe)
+# This code demonstrates how to build and compare single and dual phase model data using mcp
+# It includes the model specifications, priors, predictive checks and leave-one-out cross validation comparisons used to fit and compare these models
 
 # Load Packages
 ```{r}
