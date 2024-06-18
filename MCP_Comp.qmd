@@ -1,0 +1,145 @@
+
+#### This code demonstrates how to build and compare single and dual phase model data using mcp
+#### It includes the model specifications, priors, predictive checks and leave-one-out cross validation comparisons used to fit and compare these models
+
+# Load Packages
+```{r}
+library(tidyverse)
+library(mcp)
+library(loo)
+```
+
+# Create test set for prior model fitting
+```{r}
+sw_dbl_log2 <- function(a, b, c, d, time){
+  1 +((49)/(1+exp(-a*time + b)))+((50)/(1+exp(-c*time + d)))
+}
+
+a = 0.2
+b =  3
+
+# Single Phase
+test_1_phase<- tibble(n = 1:n,
+                 a = a,  b =  b,
+                 c = a, d =  b) %>% 
+  tidyr::expand(nesting(n, a, b, c, d),
+       time = 1:300) %>% 
+  mutate(y = round(sw_dbl_log2(a, b, c, d, time),0),
+         Full = 100)
+# Dual Phase
+test_2_phase<- tibble(n = 1:n,
+                 a = a,  b =  b,
+                 c = 0.2, d =  35) %>% 
+  tidyr::expand(nesting(n, a, b, c, d),
+       time = 1:300) %>% 
+  mutate(y = round(sw_dbl_log2(a, b, c, d, time),0),
+         Full = 100)
+```
+
+## Optional: Plot test data
+```{r}
+ggplot() +
+  geom_line(data = test_1_phase, aes(x = time, y = y), color = "red") +
+  geom_line(data =test_2_phase, aes(x = time, y = y), color = "purple") +
+  theme_minimal()
+```
+
+# Build Single Phase Model
+```{r}
+model_CP1 = list(
+  y | trials(Full) ~ 1,
+  ~ 0 + time 
+)
+fitmodel_CP1 = mcp(model_CP1, family = binomial(), sample = FALSE)
+str(fitmodel_CP1$pars, vec.len = 99)  # Compact display
+summary(fitmodel_CP1)
+```
+
+## Build Priors
+```{r echo=FALSE, message=FALSE}
+prior_CP1 = list(
+    int_1 = "dnorm(-4, 40) T(-4, -1)",
+    cp_1 =  "dirichlet(1)",
+    time_2 = "dbeta(1,15)"
+)
+empty_manual_CP1 = mcp(model_CP1, family = binomial(), prior=prior_CP1, sample = FALSE)
+str(empty_manual_CP1$prior, vec.len = 99)
+summary(empty_manual_CP1)
+```
+
+## Prior Predictive Check
+```{r}
+prior_manual_CP1 = mcp(model_CP1, family = binomial(), data = test_1_phase, 
+                       prior=prior_CP1, sample = "prior")
+
+# Plot prior_manual_CP1
+plot(prior_manual_CP1)
+```
+
+# Fit Single Phase Prior Model on Single Phase Data
+```{r}
+test_manual_CP1 = mcp(model_CP1, family = binomial(), adapt = 2000, iter = 20000, 
+                      data = test_1_phase, prior=prior_CP1, sample = "both")
+plot(test_manual_CP1)
+summary(test_manual_CP1)
+loo(test_manual_CP1)
+```
+# Build Dual Phase with Plateau Model
+```{r}
+model_CP2= list(
+  y | trials(Full) ~ 1 + time, # Positive Slope
+    ~ 0,
+  ~ 0 + time
+)
+fitmodel_CP2 = mcp(model_CP2, family = binomial(), sample = FALSE)
+str(fitmodel_CP2$pars, vec.len = 99)  # Compact display
+summary(fitmodel_CP2)
+
+```
+
+## Build Priors
+```{r}
+prior_CP2 = list(
+    int_1 = "dnorm(-4, 40) T(-4, -1)", 
+    time_1 = "dbeta(1,15)",
+    cp_1 =  "dunif(MINX, MAXX)", 
+    cp_2 =  "dunif(cp_1, MAXX)",
+    time_3 = "dbeta(1,15)"
+)
+
+empty_manual_CP2 = mcp(model_CP2, family = binomial(), prior=prior_CP2, sample = FALSE, par_x = "time")
+str(empty_manual_CP2$prior, vec.len = 99)
+summary(empty_manual_CP2)
+```
+
+## Prior Predictive Check
+```{r}
+prior_manual_CP2 = mcp(model_CP2, family = binomial(), data = test_2_phase, prior=prior_CP2, sample = "prior")
+
+# Plot prior_manual_CP1
+plot(prior_manual_CP2)
+```
+
+# Fit Dual Phase Prior Model on Dual Phase Data
+```{r}
+test_manual_CP2 = mcp(model_CP2, family = binomial(), adapt = 2000, iter = 20000, data = test_2_phase, prior=prior_CP2, sample = "both")
+plot(test_manual_CP2)
+summary(test_manual_CP2)
+loo(test_manual_CP2)
+```
+
+# Compare Models using CP2 test data
+## Fit Single Phase model onto Dual Phase data
+```{r}
+test_manual_CP2.1 = mcp(model_CP1, family = binomial(), adapt = 2000, iter = 20000, 
+                      data = test_2_phase, prior=prior_CP1, sample = "both")
+plot(test_manual_CP2.1)
+summary(test_manual_CP2.1)
+loo(test_manual_CP2.1)
+```
+
+## Loo compare
+```{r}
+loo_compare(loo(test_manual_CP2), loo(test_manual_CP2.1))
+```
+
