@@ -153,3 +153,4 @@ loo(test_manual_CP2.1)
 loo_compare(loo(test_manual_CP2), loo(test_manual_CP2.1))
 ```
 
+An additional function for visualing the model output can be found at https://github.com/MZelko82/mcp_scripts
