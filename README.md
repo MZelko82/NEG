@@ -8,7 +8,8 @@ Welcome to the repository for the project associated with the publication **"Nov
 
 - **NEG_Calc.qmd:** Quarto document used to processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed)
 - **XYTest.csv:** CSV file for testing NEG_Calc and to show required raw data strcture including column names
-- **MCP_Comp.qmd** Quarto document used to model and compare single and dual phase change point models to data 
+- **MCP_Comp.qmd** Quarto document showing how to model and compare single and dual phase change point models to data using a simulated dataset
+- **GAM_Reg.qmd** Quarto document showing how to assess effects of interest on exploration growth using Bayesian generalised additive regression on a simulated dataset 
 
 ## Project Description
 
@@ -19,7 +20,7 @@ The purpose of this project is to introduce and quantify a new metric called Nov
 - **Pre-processing:** Pre-process coordinates into Novel Exploration Growth over time
 - **Bayesian Change-point Analysis** Localise change-points in each time series to evaluate phasic nature of exploration
     - This is completed primarily through the use of the [mcp](https://lindeloev.github.io/mcp/) package  
-- **Bayesian Generalised Additive Model Analysis (Coming Soon)** Compare effects of interest using GAM models
+- **Bayesian Generalised Additive Model Analysis** Compare effects of interest using GAM models
     - This is completed primarily through the use of the [brms](https://paul-buerkner.github.io/brms/) and [mgcv](https://www.maths.ed.ac.uk/~swood34/mgcv/) packages   
 
 ## Usage
