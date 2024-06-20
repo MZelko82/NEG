@@ -25,7 +25,7 @@ The purpose of this project is to introduce and quantify a new metric called Nov
 
 ## Usage
 
-The code and analysis tools will be provided soon. Instructions on how to use the code and interpret the results will also be included.
+Users will first establish NEG time series via **NEG_Calc.qmd**. The change points in the time series will then be assess via **MCP_Comp.qmd** to establish their phasic properties. Finally, the NEG time series will be analysed using either **GAM_Reg.qmd** or generliased linear regression using a binomial link family in brms. For a more detailed workflow, see the publication below. 
 
 ## Citation
 
