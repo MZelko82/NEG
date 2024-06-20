@@ -57,6 +57,7 @@ ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
 ```
 
 ## Centre continuous predictors where necessary
+### Also consider downsampling to speed up Stan NUTS sampler
 ```{r}
 Raw2 <- data.frame(n = Raw$n,
                           Pheno = as.factor(Raw$Pheno), 
