@@ -1,0 +1,83 @@
+---
+title: "GAM_Reg"
+format: html
+editor: visual
+---
+
+# Bayesian Generalised Additive Model Regression 
+# Author: Matt Zelko
+# R x64 4.4.0
+# RStudio 2024.04.2+764 "Chocolate Cosmos" Release (e4392fc9ddc21961fd1d0efd47484b43f07a4177, 2024-06-05) for windows
+# Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) RStudio/2024.04.2+764 Chrome/120.0.6099.291 Electron/28.3.1 Safari/537.36, Quarto 1.4.549 (C:/Program Files/Quarto/bin/quarto.exe)
+
+# This code demonstrates how to specify Bayesian GAM models to assess the impact of predictors of interest on Novel Exploration Growth using an example set of three phenotypes are their exploration of the total elevated plus maze
+# It includes the model specifications, priors, predictive checks and leave-one-out cross validation comparisons used to fit and compare these models
+
+# Load Packages
+```{r}
+library(tidyverse)
+library(brms)
+library(loo)
+```
+
+# Simulate Data
+## Functions
+4 Parameter Double Sigmoid Growth
+```{r}
+sw_dbl_log <- function(a, b, c, d, Time){
+  ((50)/(1+exp(-a*Time + b)))+((50)/(1+exp(-c*Time + d)))
+}
+```
+## Total Exploration by Phenotype
+```{r}
+nn = 10
+Raw<- tibble(n = 1:(nn*3),
+               Pheno = rep(c("Exploratory", "Delayed", "Avoidant"), each = nn),
+                 a = c(rnorm(nn, 0.2,0.01),rnorm(nn, 0.2,0.01),
+                       rnorm(nn, 0.2,0.01)),
+                 b = c(rnorm(nn, 5,0.025),rnorm(nn, 5,0.025),
+                       rnorm(nn, 5,0.025)),
+                 c = c(rnorm(nn, 0.2,0.01),rnorm(nn, 0.2,0.001),
+                       rnorm(nn, 0.00001,0.000005)),
+                 d = c(rnorm(nn, 5,0.025),rnorm(nn, 35,0.025),
+                       rnorm(nn, 5,0.025))
+              ) %>% 
+  tidyr::expand(nesting(n, Pheno, a, b, c, d),
+       Time = seq(0, 300, by = 1)) %>% 
+  mutate(Expl = sw_dbl_log(a, b, c, d, Time))
+```
+
+### Plot Total Exploration by Phenotype
+```{r}
+ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
+  geom_line(linewidth =1)+ylim(0,100)+
+  scale_color_manual(values = c("#9c1f1f", "#8389a8", "#0e3063"))+ 
+  xlab("Time (s)") + ylab("Maze Explored (%)")+
+  theme_classic()
+```
+
+## Centre continuous predictors where necessary
+```{r}
+Raw2 <- data.frame(n = Raw$n,
+                          Pheno = as.factor(Raw$Pheno), 
+                          Time_C = scale(Raw$Time), 
+                          Expl_C = scale(Raw$Expl))
+```
+
+# GAM Regression for Total Maze Exploration
+```{r}
+fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
+             data = Raw2,
+            control = list(adapt_delta = 0.95, max_treedepth = 13),
+            prior = c(prior(normal(0, 1), class = "b")),
+             iter = 5000, warmup = 1000, cores = 3, chains = 3)
+```
+
+## Model Summary and Diagnostics
+```{r}
+summary(fit.GAM)
+plot(fit.GAM)
+conditional_smooths(fit.GAM)
+loo(fit.GAM)
+pp_check(fit.GAM)
+```
