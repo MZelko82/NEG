@@ -4,16 +4,23 @@
 
 Welcome to the repository for the project associated with the publication **"Novel Exploration Growth Quantifies Anxiety-like Behaviour in the Elevated Plus Maze"**. This repository contains the code and data analysis tools used in the research.
 
+## Novel Exploration Growth as a measure of Anxiety-like Behaviour
+
+Novel Exploration Growth (NEG) takes the theoretical motivations of approach and avoidance that underpin the conflict prompted by arenas like the Elevated Plus Maze and maps them to a single, coherent measure of anxiety-like behaviour. To understand this, consider a conventional measure such as time spent in the open arms. We break this into "Avoiding" and "Exploring" them, where exploration is the first visit to each part of the arms. The cumulative percentage of these visits is NEG:
+
+<img src="https://github.com/MZelko82/NEG/blob/main/Images/Map_Time_to_NEG.png" alt="From Total Time to Novel Exploration" width="300">
+
+Once we have the NEG time series, we can use the differences between arm types to infer the level of anxiety-like behaviour that is observed:
+
+<img src="https://github.com/MZelko82/NEG/blob/main/Images/InferenceTableTrim.png" alt="From Novel Exploration to Anxiety-like Behaviour" width="500">
+
+
 ## Repository Overview
 
 - **NEG_Calc.qmd:** Quarto document used to processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed)
 - **XYTest.csv:** CSV file for testing NEG_Calc and to show required raw data strcture including column names
 - **MCP_Comp.qmd** Quarto document showing how to model and compare single and dual phase change point models to data using a simulated dataset
 - **GAM_Reg.qmd** Quarto document showing how to assess effects of interest on exploration growth using Bayesian generalised additive regression on a simulated dataset 
-
-## Project Description
-
-The purpose of this project is to introduce and quantify a new metric called Novel Exploration Growth (NEG) to assess anxiety-like behavior in the Elevated Plus Maze (EPM). The NEG metric offers a detailed analysis of exploration behavior, which can be utilized in various behavioral studies.
 
 ## Key Features
 
