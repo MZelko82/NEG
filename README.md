@@ -12,7 +12,7 @@ Novel Exploration Growth (NEG) takes the theoretical motivations of approach and
 
 Once we have the NEG time series, we can use the differences between arm types to infer the level of anxiety-like behaviour that is observed:
 
-<img src="https://github.com/MZelko82/NEG/blob/main/Images/InferenceTableTrim.png" alt="From Novel Exploration to Anxiety-like Behaviour" width="500">
+<img src="https://github.com/MZelko82/NEG/blob/main/Images/InferenceTableTrimv2.png" alt="From Novel Exploration to Anxiety-like Behaviour" width="500">
 
 
 ## Repository Overview
