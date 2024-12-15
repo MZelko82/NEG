@@ -8,6 +8,7 @@ editor: visual
 # R x64 4.4.0
 # RStudio 2024.04.2+764 "Chocolate Cosmos" Release
 # This code demonstrates how to specify both Bayesian and Frequentist GAM models to assess the impact of predictors of interest on Novel Exploration Growth
+# It demonstrates the workflow for the total maze, but the same code can be run by arm type to generate conditional effects
 
 # Load Packages
 ```{r}
