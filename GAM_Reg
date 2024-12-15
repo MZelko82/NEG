@@ -3,21 +3,19 @@ title: "GAM_Reg"
 format: html
 editor: visual
 ---
-
-# Bayesian Generalised Additive Model Regression 
-# Author: Matt Zelko
+# Generalized Additive Model Regression (Bayesian & Frequentist)
+# Author: Matt Zelko (Frequentist additions by Claude)
 # R x64 4.4.0
-# RStudio 2024.04.2+764 "Chocolate Cosmos" Release (e4392fc9ddc21961fd1d0efd47484b43f07a4177, 2024-06-05) for windows
-# Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) RStudio/2024.04.2+764 Chrome/120.0.6099.291 Electron/28.3.1 Safari/537.36, Quarto 1.4.549 (C:/Program Files/Quarto/bin/quarto.exe)
-
-# This code demonstrates how to specify Bayesian GAM models to assess the impact of predictors of interest on Novel Exploration Growth using an example set of three phenotypes are their exploration of the total elevated plus maze
-# It includes the model specifications, priors, predictive checks and leave-one-out cross validation comparisons used to fit and compare these models
+# RStudio 2024.04.2+764 "Chocolate Cosmos" Release
+# This code demonstrates how to specify both Bayesian and Frequentist GAM models to assess the impact of predictors of interest on Novel Exploration Growth
 
 # Load Packages
 ```{r}
 library(tidyverse)
-library(brms)
-library(loo)
+library(brms)      # For Bayesian GAMs
+library(loo)       # For Bayesian model comparison
+library(mgcv)      # For Frequentist GAMs
+library(gratia)    # For Frequentist GAM visualization
 ```
 
 # Simulate Data
@@ -28,6 +26,7 @@ sw_dbl_log <- function(a, b, c, d, Time){
   ((50)/(1+exp(-a*Time + b)))+((50)/(1+exp(-c*Time + d)))
 }
 ```
+
 ## Total Exploration by Phenotype
 ```{r}
 nn = 10
@@ -65,7 +64,7 @@ Raw2 <- data.frame(n = Raw$n,
                           Expl_C = scale(Raw$Expl))
 ```
 
-# GAM Regression for Total Maze Exploration
+# Bayesian GAM Regression for Total Maze Exploration
 ```{r}
 fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
              data = Raw2,
@@ -74,7 +73,7 @@ fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)),
              iter = 5000, warmup = 1000, cores = 3, chains = 3)
 ```
 
-## Model Summary and Diagnostics
+## Bayesian Model Summary and Diagnostics
 ```{r}
 summary(fit.GAM)
 plot(fit.GAM)
@@ -82,3 +81,60 @@ conditional_smooths(fit.GAM)
 loo(fit.GAM)
 pp_check(fit.GAM)
 ```
+
+# Frequentist Alternative using mgcv
+## Note: Switch to this section if you prefer classical inference or need faster computation
+```{r}
+# Fit GAM using mgcv
+fit.gam.freq <- gam(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + s(n, bs = "re"), 
+                    data = Raw2, 
+                    method = "REML")  # REML is generally preferred for smoothing parameter selection
+
+# Model summary
+summary(fit.gam.freq)
+
+# Check model assumptions
+par(mfrow = c(2,2))
+gam.check(fit.gam.freq)
+
+# Visualize smooth terms
+plot(fit.gam.freq, pages = 1)
+
+# Alternative visualization using gratia
+draw(fit.gam.freq)
+
+# Compute confidence intervals for smooth terms
+# Note: This is the frequentist equivalent of the Bayesian credible intervals
+sm <- smooth_estimates(fit.gam.freq)
+plot(sm) + 
+  labs(title = "Estimated Smooth Terms with 95% Confidence Intervals")
+
+# Model criticism plots
+appraise(fit.gam.freq)
+```
+
+## Model Comparison (if you have multiple models)
+```{r}
+# AIC/BIC comparison (Frequentist alternative to LOO)
+# Example with a simpler model
+fit.gam.freq.simple <- gam(Expl_C ~ Pheno + s(Time_C, k = 30) + s(n, bs = "re"), 
+                          data = Raw2, 
+                          method = "REML")
+
+AIC(fit.gam.freq, fit.gam.freq.simple)
+BIC(fit.gam.freq, fit.gam.freq.simple)
+
+# Compare model predictions
+predictions.freq <- predict(fit.gam.freq, type = "response", se.fit = TRUE)
+```
+
+# Note on Interpretation Differences
+# - Bayesian analysis provides full posterior distributions and credible intervals
+# - Frequentist analysis provides point estimates and confidence intervals
+# - Both approaches should give similar results for well-specified models
+# - Frequentist computation is typically faster but provides less uncertainty information
+# - Choose based on your needs for:
+#   * Computational speed (Frequentist is faster)
+#   * Uncertainty quantification (Bayesian provides more detail)
+#   * Prior knowledge incorporation (Only available in Bayesian)
+#   * Inference type (Classical vs Bayesian interpretation)
