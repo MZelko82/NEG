@@ -56,18 +56,12 @@ ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
 ```
 
 ## Centre continuous predictors where necessary
-### Also consider downsampling to speed up Stan NUTS sampler
-```{r}
-Raw2 <- data.frame(n = Raw$n,
-                          Pheno = as.factor(Raw$Pheno), 
-                          Time_C = scale(Raw$Time), 
-                          Expl_C = scale(Raw$Expl))
-```
+
 
 # Bayesian GAM Regression for Total Maze Exploration
 ```{r}
 fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
-             data = Raw2,
+             data = Raw,
             control = list(adapt_delta = 0.95, max_treedepth = 13),
             prior = c(prior(normal(0, 1), class = "b")),
              iter = 5000, warmup = 1000, cores = 3, chains = 3)
@@ -87,7 +81,7 @@ pp_check(fit.GAM)
 ```{r}
 # Fit GAM using mgcv
 fit.gam.freq <- gam(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + s(n, bs = "re"), 
-                    data = Raw2, 
+                    data = Raw, 
                     method = "REML")  # REML is generally preferred for smoothing parameter selection
 
 # Model summary
@@ -118,7 +112,7 @@ appraise(fit.gam.freq)
 # AIC/BIC comparison (Frequentist alternative to LOO)
 # Example with a simpler model
 fit.gam.freq.simple <- gam(Expl_C ~ Pheno + s(Time_C, k = 30) + s(n, bs = "re"), 
-                          data = Raw2, 
+                          data = Raw, 
                           method = "REML")
 
 AIC(fit.gam.freq, fit.gam.freq.simple)
