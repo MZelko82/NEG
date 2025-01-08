@@ -90,27 +90,20 @@ button:hover {
 
 #metrics {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    justify-content: space-between;
+    padding: 20px;
 }
 
 #metrics h3 {
-    margin: 0;
+    margin: 0 0 5px 0;
     font-size: 16px;
     color: #333;
     text-align: left;
-    padding-left: 50px;
 }
 
 .graph-container {
     background: white;
     padding: 10px;
     border-radius: 5px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
 }
 
 .graph-container h3 {
@@ -126,14 +119,15 @@ button:hover {
 
 #open-arms-graph,
 #closed-arms-graph,
-#total-exploration-graph {
+#total-graph {
+    width: 100%;
+    height: 150px;
+    margin-bottom: 20px;
     background-color: white;
-    padding: 15px;
-    flex: 1;
-    min-height: 150px;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
+}
+
+#total-graph {
+    margin-bottom: 0;
 }
 
 .maze-cell {
@@ -190,6 +184,6 @@ button:hover {
     stroke: #BE514E;
 }
 
-#total-exploration-graph .line {
-    stroke: #4C25AE;
+#total-graph .line {
+    stroke: #BE94C8;
 }

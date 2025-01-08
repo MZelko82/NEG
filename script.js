@@ -236,25 +236,25 @@ class EPMVisualization {
     }
 
     setupGraphs() {
-        const margin = { top: 20, right: 30, bottom: 30, left: 50 };
-        const width = 400 - margin.left - margin.right;
-        const height = 200 - margin.top - margin.bottom;
-
-        this.xScale = d3.scaleLinear()
-            .domain([0, 300])
-            .range([0, width]);
-
-        this.yScale = d3.scaleLinear()
-            .domain([0, 100])
-            .range([height, 0]);
-
         const createGraph = (selector, lineColor) => {
+            const margin = { top: 10, right: 20, bottom: 30, left: 40 };
+            const width = 400 - margin.left - margin.right;
+            const height = 150 - margin.top - margin.bottom;
+
             const svg = d3.select(selector)
                 .append('svg')
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', height + margin.top + margin.bottom)
                 .append('g')
                 .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            this.xScale = d3.scaleLinear()
+                .domain([0, 300])
+                .range([0, width]);
+
+            this.yScale = d3.scaleLinear()
+                .domain([0, 100])
+                .range([height, 0]);
 
             svg.append('g')
                 .attr('class', 'x-axis')
