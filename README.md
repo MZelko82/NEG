@@ -14,6 +14,8 @@ Once we have the NEG time series, we can use the differences between arm types t
 
 <img src="https://github.com/MZelko82/NEG/blob/main/Images/InferenceTableTrimv2.png" alt="From Novel Exploration to Anxiety-like Behaviour" width="500">
 
+
+
 *Click the preview image below to view a interactive visualisation of how phenotypical movements in the maze are mapped to the NEG by arm type and for the total maze*
 
 [![Interactive NEG Visualization Preview](Images/NEG_Preview.png)](https://mzelko82.github.io/NEG/visualisations/)
