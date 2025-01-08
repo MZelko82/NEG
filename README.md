@@ -6,7 +6,7 @@ Welcome to the repository for the project associated with the publication **"Nov
 
 ## Novel Exploration Growth as a measure of Anxiety-like Behaviour
 
-Novel Exploration Growth (NEG) takes the theoretical motivations of approach and avoidance that underpin the conflict prompted by arenas like the Elevated Plus Maze and maps them to a single, coherent measure of anxiety-like behaviour. To understand this, consider a conventional measure such as time spent in the open arms. We break this into "Avoiding" and "Exploring" them, where exploration is the first visit to each part of the arms. The cumulative percentage of these visits is NEG:
+Novel Exploration Growth (NEG) takes the theoretical motivations of approach and avoidance that underpin the conflict prompted by arenas like the Elevated Plus Maze and maps them to a single, coherent measure of anxiety-like behaviour. To understand this, consider a conventional measure such as time spent in the open arms. We break this into avoiding, exploring and preferencing the open arms, where exploration is the first visit to each part of the arms. The cumulative percentage of these naive visits is our new measure NEG:
 
 <br>
 
