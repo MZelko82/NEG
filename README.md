@@ -8,14 +8,16 @@ Welcome to the repository for the project associated with the publication **"Nov
 
 Novel Exploration Growth (NEG) takes the theoretical motivations of approach and avoidance that underpin the conflict prompted by arenas like the Elevated Plus Maze and maps them to a single, coherent measure of anxiety-like behaviour. To understand this, consider a conventional measure such as time spent in the open arms. We break this into "Avoiding" and "Exploring" them, where exploration is the first visit to each part of the arms. The cumulative percentage of these visits is NEG:
 
-[View Interactive NEG Visualization](https://mzelko82.github.io/NEG/)
-
 <img src="https://github.com/MZelko82/NEG/blob/main/Images/Fig1.png" alt="From Total Time to Novel Exploration" width="300">
 
 Once we have the NEG time series, we can use the differences between arm types to infer the level of anxiety-like behaviour that is observed:
 
 <img src="https://github.com/MZelko82/NEG/blob/main/Images/InferenceTableTrimv2.png" alt="From Novel Exploration to Anxiety-like Behaviour" width="500">
 
+
+[![Interactive NEG Visualization Preview](https://github.com/MZelko82/NEG/blob/main/Images/NEG_Preview.png)](https://mzelko82.github.io/NEG/)
+
+*Click the image above to view the interactive visualization*
 
 ## Repository Overview
 
