@@ -72,11 +72,28 @@ class EPMVisualization {
             }
         }
 
+        const center = Math.floor(this.gridSize/2);
+        
+        svg.append('text')
+            .attr('x', (center - 0.5) * this.cellSize)
+            .attr('y', (center - 25.5) * this.cellSize)
+            .attr('text-anchor', 'middle')
+            .attr('fill', '#387A96')
+            .style('font-weight', 'bold')
+            .text('Open Arms');
+
+        svg.append('text')
+            .attr('x', (center - 20) * this.cellSize)
+            .attr('y', (center - 2) * this.cellSize)
+            .attr('text-anchor', 'middle')
+            .attr('fill', '#BE514E')
+            .style('font-weight', 'bold')
+            .text('Closed Arms');
+
         this.mouse = svg.append('circle')
             .attr('r', this.cellSize/3)
             .attr('fill', '#FFE599');
 
-        const center = Math.floor(this.gridSize/2);
         this.mouse
             .attr('cx', (center - 1) * this.cellSize + this.cellSize/2)
             .attr('cy', (center - 1) * this.cellSize + this.cellSize/2);
