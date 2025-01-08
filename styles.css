@@ -1,0 +1,189 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.controls {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.control-group label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+#phenotype-selector {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    min-width: 200px;
+}
+
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#speed-slider {
+    width: 200px;
+}
+
+.control-group:last-child {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.visualization {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+}
+
+#maze {
+    flex: 0 0 auto;
+    background-color: white;
+    padding: 20px;
+    min-height: 500px;
+}
+
+#maze svg {
+    background-color: white;
+}
+
+#metrics {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#metrics h3 {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #333;
+    text-align: left;
+    padding-left: 50px;
+}
+
+.graph-container {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.graph-container h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.graph-container svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+#open-arms-graph,
+#closed-arms-graph,
+#total-exploration-graph {
+    background-color: white;
+    padding: 15px;
+    height: 200px;
+    margin-bottom: 20px;
+}
+
+.maze-cell {
+    stroke: #ddd;
+}
+
+.open-arm, .closed-arm, .center-zone {
+    pointer-events: none;
+}
+
+.mouse {
+    fill: red;
+    r: 5;
+    transition: cx 0.2s, cy 0.2s;
+}
+
+.line {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.grid line {
+    stroke: #ddd;
+    stroke-opacity: 0.1;
+}
+
+.grid path {
+    stroke-width: 0;
+}
+
+.x-axis path,
+.y-axis path,
+.x-axis line,
+.y-axis line {
+    stroke: #ccc;
+}
+
+.x-axis text,
+.y-axis text {
+    font-size: 12px;
+    fill: #666;
+}
+
+.grid-cell {
+    pointer-events: none;
+}
+
+#open-arms-graph .line {
+    stroke: #387A96;
+}
+
+#closed-arms-graph .line {
+    stroke: #BE514E;
+}
+
+#total-exploration-graph .line {
+    stroke: #4C25AE;
+}

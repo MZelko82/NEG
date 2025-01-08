@@ -1,0 +1,87 @@
+EPM (Elevated Plus Maze) Visualization Project Specifications
+
+PROJECT OVERVIEW:
+Create an interactive visualization demonstrating mouse behavior patterns in an Elevated Plus Maze (EPM), a standard behavioral neuroscience apparatus used to measure anxiety-like behavior in rodents.
+
+MAZE STRUCTURE:
+- Plus-shaped maze with four arms
+- Two open arms (no walls)
+- Two closed arms (with walls)
+- Central zone: 3x3 grid squares
+- Each arm: 5 squares long, 3 squares wide
+- Grid-based movement system
+- Center zone visually marked and excluded from exploration counts
+
+BEHAVIORAL PHENOTYPES:
+1. Exploratory Mouse:
+   - Starts in center
+   - Systematically explores open arms first
+   - Then explores closed arms
+   - Full exploration of each arm before moving to next
+   - Pattern: North (open) -> East (closed) -> South (open) -> West (closed)
+
+2. Delayed Mouse:
+   - Starts in center
+   - Explores closed arms first
+   - Remains in closed arms for 150 time steps
+   - Then explores open arms
+   - Pattern: East (closed) -> West (closed) -> delay -> North (open) -> South (open)
+
+3. Avoidant Mouse:
+   - Starts in center
+   - Only explores closed arms
+   - Never enters open arms
+   - Pattern: East (closed) -> West (closed) -> stays in center
+
+METRICS AND VISUALIZATION:
+1. Main EPM Display:
+   - Grid-based visualization
+   - Mouse represented as red circle
+   - Open arms in light color (#f0f0f0)
+   - Closed arms in darker color (#d0d0d0)
+   - Center zone marked with dashed lines
+
+2. Real-time Graphs:
+   - Open Arms Exploration (%)
+   - Closed Arms Exploration (%)
+   - Total Exploration (%)
+   - All graphs show 0-100% on y-axis
+   - X-axis shows time steps
+   - Each grid square contributes equally to percentage
+
+INTERACTION FEATURES:
+- Phenotype selector dropdown
+- Play/Pause button
+- Animation speed slider (1-10)
+- Reset button
+- Grid-based mouse movement (1 square per time step)
+
+TECHNICAL SPECIFICATIONS:
+- Built using D3.js for visualization
+- No random movements - all patterns predetermined
+- Center zone (9 squares) excluded from metrics
+- Maximum 300 time steps
+- Responsive design for graphs
+- Color-coded metrics visualization
+
+IMPLEMENTATION DETAILS:
+- Uses HTML5, CSS3, and JavaScript
+- D3.js for SVG manipulation and graphs
+- Grid system for precise movement tracking
+- Each arm section contributes equally to exploration percentage
+- Real-time metric updates
+- Browser-based visualization
+- No external dependencies beyond D3.js
+
+FILE STRUCTURE:
+- index.html: Main HTML structure
+- script.js: Core visualization logic
+- styles.css: Styling and layout
+- README.md: Project documentation
+
+NOTES:
+- Exploration percentages based on unique squares visited
+- Center zone visits don't contribute to metrics
+- Each grid square can only be counted once
+- Mouse moves one grid square per time step
+- All movements are deterministic based on phenotype
