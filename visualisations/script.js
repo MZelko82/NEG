@@ -299,7 +299,7 @@ class EPMVisualization {
 
         d3.select('#play-pause').on('click', () => {
             this.isPlaying = !this.isPlaying;
-            d3.select('#play-pause').text(this.isPlaying ? 'Pause' : 'Play');
+            d3.select('#play-pause').text(this.isPlaying ? 'Stop' : 'Play');
             if (this.isPlaying) this.animate();
         });
 
