@@ -18,7 +18,7 @@ body {
 .controls {
     margin-top: 0;
     display: flex;
-    gap: 18px;
+    gap: 12px;
     align-items: center;
     width: 100%;
 }
@@ -39,7 +39,7 @@ body {
     padding: 7px;
     border-radius: 4px;
     border: 1px solid #ddd;
-    min-width: 160px;
+    min-width: 150px;
 }
 
 button {
@@ -49,6 +49,8 @@ button {
     background-color: #007bff;
     color: white;
     cursor: pointer;
+    width: 70px;
+    text-align: center;
 }
 
 button:hover {
@@ -89,6 +91,7 @@ button:hover {
     display: flex;
     flex-direction: column;
     margin-right: 12px;
+    max-width: 360px;
 }
 
 #metrics h3 {
@@ -177,13 +180,4 @@ button:hover {
 
 #total-graph .line {
     stroke: #BE94C8;
-}
-
-.setupGraphs() {
-    const createGraph = (selector, lineColor) => {
-        const margin = { top: 9, right: 18, bottom: 27, left: 36 };
-        const width = 340 - margin.left - margin.right;
-        const height = 135 - margin.top - margin.bottom;
-        // ... rest of graph setup
-    };
 }
