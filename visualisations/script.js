@@ -1,11 +1,11 @@
 class EPMVisualization {
     constructor() {
-        this.gridSize = 54; 
-        this.cellSize = 10;
+        this.gridSize = 34; 
+        this.cellSize = 18;
         this.timeStep = 0;
         this.maxTimeSteps = 318; 
         this.isPlaying = false;
-        this.speed = 20; 
+        this.speed = 10; 
         this.currentPhenotype = 'exploratory';
         
         this.visitedSquares = {
@@ -44,20 +44,21 @@ class EPMVisualization {
             for (let j = 0; j < this.gridSize; j++) {
                 const center = Math.floor(this.gridSize/2);
                 
-                if ((i >= center-1 && i <= center && j >= center-25 && j <= center+25) || 
-                    (j >= center-1 && j <= center && i >= center-25 && i <= center+25)) {
+                if ((i === center && j >= center-15 && j <= center+15) || 
+                    (j === center && i >= center-15 && i <= center+15)) {
                     
                     let color = 'white';
                     
-                    if (i >= center-1 && i <= center && j >= center-1 && j <= center) {
+                    if (i === center && j === center) {
                         color = 'black';
                     }
-                    else if ((i < center-1 && j >= center-1 && j <= center) || 
-                        (i > center && j >= center-1 && j <= center)) {   
-                        color = '#387A96'; 
-                    } else if ((j > center && i >= center-1 && i <= center) || 
-                              (j < center-1 && i >= center-1 && i <= center)) { 
+                    // Closed arms (horizontal)
+                    else if (i === center && (j < center || j > center)) {   
                         color = '#BE514E'; 
+                    } 
+                    // Open arms (vertical)
+                    else if (j === center && (i < center || i > center)) { 
+                        color = '#387A96'; 
                     }
 
                     svg.append('rect')
@@ -75,16 +76,16 @@ class EPMVisualization {
         const center = Math.floor(this.gridSize/2);
         
         svg.append('text')
-            .attr('x', (center - 0.5) * this.cellSize)
-            .attr('y', (center - 25.5) * this.cellSize)
+            .attr('x', center * this.cellSize)
+            .attr('y', (center - 15.5) * this.cellSize)
             .attr('text-anchor', 'middle')
             .attr('fill', '#387A96')
             .style('font-weight', 'bold')
             .text('Open Arms');
 
         svg.append('text')
-            .attr('x', (center - 20) * this.cellSize)
-            .attr('y', (center - 2) * this.cellSize)
+            .attr('x', (center - 12) * this.cellSize)
+            .attr('y', (center - 0.5) * this.cellSize)
             .attr('text-anchor', 'middle')
             .attr('fill', '#BE514E')
             .style('font-weight', 'bold')
@@ -95,22 +96,22 @@ class EPMVisualization {
             .attr('fill', '#FFE599');
 
         this.mouse
-            .attr('cx', (center - 1) * this.cellSize + this.cellSize/2)
-            .attr('cy', (center - 1) * this.cellSize + this.cellSize/2);
+            .attr('cx', center * this.cellSize + this.cellSize/2)
+            .attr('cy', center * this.cellSize + this.cellSize/2);
     }
 
     getCellType(i, j) {
         const center = Math.floor(this.gridSize/2);
         
-        if (Math.abs(i - center) <= 1 && Math.abs(j - center) <= 1) {
+        if (i === center && j === center) {
             return 'center-zone';
         }
         
-        if (j === center && (i < center-1 || i > center+1)) {
+        if (j === center && i !== center) {
             return 'open-arm';
         }
         
-        if (i === center && (j < center-1 || j > center+1)) { 
+        if (i === center && j !== center) { 
             return 'closed-arm';
         }
 
@@ -121,47 +122,38 @@ class EPMVisualization {
         const pattern = [];
         const center = Math.floor(this.gridSize/2);
         
-        pattern.push({x: center - 1, y: center - 1}); 
+        pattern.push({x: center, y: center}); 
         
-        pattern.push({x: center - 2, y: center - 1});
-        for (let i = center - 2; i >= center - 25; i--) {
-            pattern.push({x: i, y: center - 1});
+        for (let i = center - 1; i >= center - 15; i--) {
+            pattern.push({x: i, y: center});
         }
-        pattern.push({x: center - 25, y: center});
-        for (let i = center - 25; i <= center - 1; i++) {
+        for (let i = center - 15; i <= center; i++) {
             pattern.push({x: i, y: center});
         }
         
-        pattern.push({x: center - 1, y: center + 1});
-        for (let j = center + 1; j <= center + 25; j++) {
-            pattern.push({x: center - 1, y: j});
+        for (let j = center + 1; j <= center + 15; j++) {
+            pattern.push({x: center, y: j});
         }
-        pattern.push({x: center, y: center + 25});
-        for (let j = center + 25; j >= center - 1; j--) {
+        for (let j = center + 15; j >= center; j--) {
             pattern.push({x: center, y: j});
         }
         
-        pattern.push({x: center + 1, y: center - 1});
-        for (let i = center + 1; i <= center + 25; i++) {
-            pattern.push({x: i, y: center - 1});
+        for (let i = center + 1; i <= center + 15; i++) {
+            pattern.push({x: i, y: center});
         }
-        pattern.push({x: center + 25, y: center});
-        for (let i = center + 25; i >= center; i--) {
+        for (let i = center + 15; i >= center; i--) {
             pattern.push({x: i, y: center});
         }
         
-        pattern.push({x: center - 1, y: center - 2});
-        for (let j = center - 2; j >= center - 25; j--) {
-            pattern.push({x: center - 1, y: j});
+        for (let j = center - 1; j >= center - 15; j--) {
+            pattern.push({x: center, y: j});
         }
-        pattern.push({x: center, y: center - 25});
-        for (let j = center - 25; j <= center - 1; j++) {
+        for (let j = center - 15; j <= center; j++) {
             pattern.push({x: center, y: j});
         }
 
-        const finalPosition = {x: center - 1, y: center - 1}; 
-        while (pattern.length < 318) {
-            pattern.push(finalPosition);
+        while (pattern.length < this.maxTimeSteps) {
+            pattern.push({x: center, y: center});
         }
 
         return pattern;
@@ -171,46 +163,42 @@ class EPMVisualization {
         const pattern = [];
         const center = Math.floor(this.gridSize/2);
         
-        pattern.push({x: center - 1, y: center - 1}); 
+        pattern.push({x: center, y: center}); 
         
-        pattern.push({x: center - 1, y: center + 1});
-        for (let j = center + 1; j <= center + 25; j++) {
-            pattern.push({x: center - 1, y: j});
+        for (let j = center + 1; j <= center + 15; j++) {
+            pattern.push({x: center, y: j});
         }
-        pattern.push({x: center, y: center + 25});
-        for (let j = center + 25; j >= center - 1; j--) {
+        for (let j = center + 15; j >= center; j--) {
             pattern.push({x: center, y: j});
         }
         
-        pattern.push({x: center - 1, y: center - 2});
-        for (let j = center - 2; j >= center - 25; j--) {
-            pattern.push({x: center - 1, y: j});
-        }
-        pattern.push({x: center, y: center - 25});
-        for (let j = center - 25; j <= center - 1; j++) {
+        for (let j = center - 1; j >= center - 15; j--) {
             pattern.push({x: center, y: j});
+        }
+        for (let j = center - 15; j <= center; j++) {
+            pattern.push({x: center, y: j});
+        }
+        
+        for (let i = 0; i < 106; i++) {
+            pattern.push({x: center, y: center});
+        }
+        
+        for (let i = center - 1; i >= center - 15; i--) {
+            pattern.push({x: i, y: center});
+        }
+        for (let i = center - 15; i <= center; i++) {
+            pattern.push({x: i, y: center});
+        }
+        
+        for (let i = center + 1; i <= center + 15; i++) {
+            pattern.push({x: i, y: center});
+        }
+        for (let i = center + 15; i >= center; i--) {
+            pattern.push({x: i, y: center});
         }
 
-        for (let i = 0; i < 106; i++) {
-            pattern.push({x: center - 1, y: center - 1});
-        }
-        
-        pattern.push({x: center - 2, y: center - 1});
-        for (let i = center - 2; i >= center - 25; i--) {
-            pattern.push({x: i, y: center - 1});
-        }
-        pattern.push({x: center - 25, y: center});
-        for (let i = center - 25; i <= center - 1; i++) {
-            pattern.push({x: i, y: center});
-        }
-        
-        pattern.push({x: center + 1, y: center - 1});
-        for (let i = center + 1; i <= center + 25; i++) {
-            pattern.push({x: i, y: center - 1});
-        }
-        pattern.push({x: center + 25, y: center});
-        for (let i = center + 25; i >= center; i--) {
-            pattern.push({x: i, y: center});
+        while (pattern.length < this.maxTimeSteps) {
+            pattern.push({x: center, y: center});
         }
 
         return pattern;
@@ -220,33 +208,28 @@ class EPMVisualization {
         const pattern = [];
         const center = Math.floor(this.gridSize/2);
         
-        pattern.push({x: center - 1, y: center - 1}); 
+        pattern.push({x: center, y: center}); 
         
-        pattern.push({x: center - 1, y: center + 1});
-        for (let j = center + 1; j <= center + 25; j++) {
-            pattern.push({x: center - 1, y: j});
+        for (let j = center + 1; j <= center + 15; j++) {
+            pattern.push({x: center, y: j});
         }
-        pattern.push({x: center, y: center + 25});
-        for (let j = center + 25; j >= center - 1; j--) {
+        for (let j = center + 15; j >= center; j--) {
             pattern.push({x: center, y: j});
         }
         
         for (let i = 0; i < 5; i++) {
-            pattern.push({x: center - 1, y: center - 1});
+            pattern.push({x: center, y: center});
         }
         
-        pattern.push({x: center - 1, y: center - 2});
-        for (let j = center - 2; j >= center - 25; j--) {
-            pattern.push({x: center - 1, y: j});
+        for (let j = center - 1; j >= center - 15; j--) {
+            pattern.push({x: center, y: j});
         }
-        pattern.push({x: center, y: center - 25});
-        for (let j = center - 25; j <= center - 1; j++) {
+        for (let j = center - 15; j <= center; j++) {
             pattern.push({x: center, y: j});
         }
 
-        const remainingSteps = this.maxTimeSteps - pattern.length;
-        for (let i = 0; i < remainingSteps; i++) {
-            pattern.push({x: center - 1, y: center - 1});
+        while (pattern.length < this.maxTimeSteps) {
+            pattern.push({x: center, y: center});
         }
 
         return pattern;
@@ -254,9 +237,9 @@ class EPMVisualization {
 
     setupGraphs() {
         const createGraph = (selector, lineColor) => {
-            const margin = { top: 10, right: 20, bottom: 30, left: 40 };
-            const width = 400 - margin.left - margin.right;
-            const height = 150 - margin.top - margin.bottom;
+            const margin = { top: 9, right: 18, bottom: 27, left: 36 };
+            const width = 360 - margin.left - margin.right;
+            const height = 135 - margin.top - margin.bottom;
 
             const svg = d3.select(selector)
                 .append('svg')
@@ -316,7 +299,7 @@ class EPMVisualization {
 
         d3.select('#play-pause').on('click', () => {
             this.isPlaying = !this.isPlaying;
-            d3.select('#play-pause').text(this.isPlaying ? 'Pause' : 'Play');
+            d3.select('#play-pause').text(this.isPlaying ? 'Stop' : 'Play');
             if (this.isPlaying) this.animate();
         });
 
@@ -362,9 +345,9 @@ class EPMVisualization {
         const closedSquares = this.visitedSquares.closed.size;
         const totalSquares = openSquares + closedSquares;
         
-        const openPercentage = (openSquares / 100) * 100;    
-        const closedPercentage = (closedSquares / 100) * 100; 
-        const totalPercentage = (totalSquares / 200) * 100;   
+        const openPercentage = (openSquares / 30) * 100;    
+        const closedPercentage = (closedSquares / 30) * 100; 
+        const totalPercentage = (totalSquares / 60) * 100;   
         
         const currentTime = (this.timeStep / 318) * 300;
         
@@ -407,8 +390,8 @@ class EPMVisualization {
         
         const center = Math.floor(this.gridSize/2);
         this.mouse
-            .attr('cx', (center - 1) * this.cellSize + this.cellSize/2)
-            .attr('cy', (center - 1) * this.cellSize + this.cellSize/2);
+            .attr('cx', center * this.cellSize + this.cellSize/2)
+            .attr('cy', center * this.cellSize + this.cellSize/2);
 
         this.graphs.open.select('.line').attr('d', null);
         this.graphs.closed.select('.line').attr('d', null);
