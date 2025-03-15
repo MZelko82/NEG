@@ -84,7 +84,7 @@ class EPMVisualization {
             .text('Open Arms');
 
         svg.append('text')
-            .attr('x', (center - 15) * this.cellSize)
+            .attr('x', (center - 12) * this.cellSize)
             .attr('y', (center - 0.5) * this.cellSize)
             .attr('text-anchor', 'middle')
             .attr('fill', '#BE514E')
