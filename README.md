@@ -23,7 +23,7 @@ Once we have the NEG time series, we can use the differences between arm types t
 ### *Click the preview image below to view a interactive visualisation of how phenotypical movements in the maze are mapped to the NEG by arm type and for the total maze*
 <br>
 
-<div style="border: 2px solid #000000; display: inline-block;">
+<div style="border: 20px solid #000000; display: inline-block;">
   <a href="https://mzelko82.github.io/NEG/visualisations/">
     <img src="Images/NEG_Preview3.png" alt="Interactive NEG Visualization Preview">
   </a>
