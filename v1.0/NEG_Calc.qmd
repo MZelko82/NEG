@@ -1,0 +1,373 @@
+---
+title: "Exploration Analysis in Elevated Plus Maze"
+author: "Matt Zelko"
+format: html
+---
+
+```{r}
+# Load necessary packages
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+```
+# Process Data
+```{r}
+# Function to read and clean data
+read_and_clean_data <- function(file_path) {
+  data <- read_csv(file_path)
+  
+  # Check for missing values and interpolate
+  data <- data %>%
+    mutate(x = zoo::na.approx(X, na.rm = FALSE),
+           y = zoo::na.approx(Y, na.rm = FALSE))
+  
+  # Calculate the distance traveled and velocity of the animal
+  data <- data %>%
+    mutate(distance = sqrt((x - lag(x))^2 + (y - lag(y))^2),
+           velocity = distance / (Time - lag(Time)))
+  # These values are not correct since they are assume all x and y values are positive, when they are not.
+  
+  
+  # Calculate the mean of the coordinates
+  x_mean <- mean(data$x, na.rm = TRUE)
+  y_mean <- mean(data$y, na.rm = TRUE)
+  
+  # Recentre the coordinates around (0,0)
+  data <- data %>%
+    mutate(x = x - x_mean,
+           y = y - y_mean)
+  
+  return(data)
+}
+
+data <- read_and_clean_data(paste0(getwd(), "/Raw/XYTest.csv"))
+```
+# Find extreme points in data to aid in constructing grid mask
+```{r}
+# Function to find and label extreme points
+label_extreme_points <- function(data) {
+
+  # Calculate coordinates of extreme points
+   max_y_at_mean_x <- data %>% filter(y == max(y)) 
+   max_y_at_mean_x <- c(max_y_at_mean_x$x[1], max_y_at_mean_x$y[1])
+   
+  min_y_at_mean_x <- data %>% filter(y == min(y)) 
+  min_y_at_mean_x <- c(min_y_at_mean_x$x[1], min_y_at_mean_x$y[1])
+    
+  max_x_at_mean_y <- data %>% filter(x == max(x)) 
+  max_x_at_mean_y <- c(max_x_at_mean_y$x[1], max_x_at_mean_y$y[1])
+  
+  min_x_at_mean_y <- data %>% filter(x == min(x))
+  min_x_at_mean_y <- c(min_x_at_mean_y$x[1], min_x_at_mean_y$y[1])
+  
+  # Combine the extreme points
+  extreme_points <- data.frame(x = c(max_y_at_mean_x[1], 
+                               min_y_at_mean_x[1], 
+                               max_x_at_mean_y[1], min_x_at_mean_y[1]),
+                               y = c(max_y_at_mean_x[2], 
+                               min_y_at_mean_x[2], 
+                               max_x_at_mean_y[2], min_x_at_mean_y[2]))
+  
+  return(extreme_points)
+}
+
+# Function to plot data with labeled extreme points
+plot_data_with_labels <- function(data, extreme_points) {
+  ggplot(data, aes(x, y)) +
+    geom_point(aes(color = Time)) +
+    geom_point(data = extreme_points, aes(round(x,2), round(y,2)), color = "red", size = 3) +
+    geom_text(data = extreme_points, aes(x, y, label = paste0("(", round(x,2), ", ", round(y,2), ")")), vjust = -1, color = "red") +
+    theme_minimal() +
+    xlim(min(extreme_points$x) - 3, max(extreme_points$x) + 3)+
+    ylim(min(extreme_points$y) - 3, max(extreme_points$y) + 3)+
+    labs(title = "Recentered Coordinates with Extreme Points Labeled",
+         x = "X Coordinate",
+         y = "Y Coordinate")
+}
+
+extreme_points <- label_extreme_points(data)
+plot <- plot_data_with_labels(data, extreme_points)
+plot
+```
+
+# Enter edge points of the maze grid and Open / Closed Arm planes for grid mask
+```{r}
+# Identify edge points based on the plot above (x, y)
+  top_left <- c(-1, 41)
+  top_right <- c(3, 41)
+  bottom_left<- c(-1, -41)
+  bottom_right <- c(3, -41)
+  left_top <- c(-38,2)
+  left_bottom <- c(-38,-2)
+  right_top <- c(42,2)
+  right_bottom <- c(42,-2)
+  center_z <- data.frame(coords  = c("topleft", "topright", "bottomleft", "bottomright"),
+                                     x = c(top_left[1], top_right[1], top_left[1], top_right[1]),
+                                     y = c(left_top[2], left_top[2], left_bottom[2], left_bottom[2]))
+  
+# Arm Planes using Top Left, Top Right, Bottom Left, Bottom Right, Left Top, Left Bottom, Right Top, Right Bottom
+# USER SWITCH AS NECESSARY
+  Open_Arm_Plane <- data.frame(coords = c("topleft", "topright", "bottomleft", "bottomright"),
+                                 x = c(top_left[1], 
+                                       top_right[1], 
+                                       bottom_left[1], 
+                                       bottom_right[1]),
+                               y = c(top_left[2], 
+                                       top_right[2], 
+                                       bottom_left[2], 
+                                       bottom_right[2]))
+  Closed_Arm_Plane <- data.frame(coords = c("lefttop", "leftbottom", "righttop", "rightbottom"),
+    x = c(left_top[1], 
+          left_bottom[1], 
+          right_top[1], 
+          right_bottom[1]),
+     y = c(left_top[2], 
+          left_bottom[2], 
+          right_top[2], 
+          right_bottom[2]))
+#Combine planes
+  Arm_Planes <- rbind(Open_Arm_Plane, Closed_Arm_Plane)
+  
+# Grid Size in cms
+# GS  values below 1 are possible but require larger grids and higher time sampling rates
+GS <- 1
+```
+# Create full grid mask without center zone
+```{r}
+# Function to create maze grid centered at (0,0) and mask possible squares based on user input
+create_maze_grid <- function(data, Arm_Planes, top_left, top_right, bottom_left, bottom_right, left_top, left_bottom, right_top, right_bottom, center_z) {
+  # Determine the ranges for the grid
+  x_range <- seq(floor(min(Arm_Planes$x)), ceiling(max(Arm_Planes$x)), by = GS)
+  y_range <- seq(floor(min(Arm_Planes$y)), ceiling(max(Arm_Planes$y)), by = GS)
+  
+  # Create the grid
+  grid <- expand.grid(x = x_range, y = y_range)
+  
+  # Create mask for possible squares
+  grid <- grid %>%
+    mutate(mask = if_else(
+      # First condition: vertical arm
+      (x >= top_left[1] & x <= top_right[1] & y <= top_left[2] & y >= bottom_left[2]) |
+      # Second condition: horizontal arm
+      (y >= left_bottom[2] & y <= left_top[2] & x >= left_top[1] & x <= right_top[1]),
+      1, 0))
+  
+  # remove the center of the maze from the grid
+   x_range_c <- seq(floor(min(center_z$x)), ceiling(max(center_z$x)), by = GS)
+  y_range_c <- seq(floor(min(center_z$y)), ceiling(max(center_z$y)), by = GS)
+  
+  # Create the grid
+  center_z_grid <- expand.grid(x = x_range_c, y = y_range_c)
+  grid <- grid %>%
+  mutate(mask = ifelse(paste(x, y) %in% paste(center_z_grid$x, center_z_grid$y), 0, mask))
+  
+  return(grid)
+}
+
+grid <- create_maze_grid(data, Arm_Planes, top_left, top_right, bottom_left, bottom_right, left_top, left_bottom, right_top, right_bottom, center_z)
+```
+
+## Optional: Plot the Mask of the Entire Maze Grid
+```{r}
+# Plot the maze grid
+ggplot(grid |> filter(mask == 1), aes(x = x, y = y, fill = as.factor(mask))) +
+  geom_tile() +
+  labs(TITLE = "Masked Maze Grid") +
+  theme_minimal()
+```
+# Isolate first visits to each grid square in time
+```{r}
+# Function to find the first visit to each grid point using the mask
+find_first_visits <- function(data, grid) {
+  # Calculate the time step approximation
+  time_step_approx <- (max(data$Time, na.rm = TRUE) - min(data$Time, na.rm = TRUE)) / nrow(data)
+  
+  #data <- data %>%
+   # mutate(time_step = round((row_number() - 1) * time_step_approx),3) # Add an approximated time step column
+  
+  # Round the coordinates to match the grid points
+   data <- data %>%
+     mutate(x = round((x/GS),0) * GS,
+            y = round((y/GS),0) * GS)
+   
+  # Initialize the first visit matrix
+  grid <- grid %>%
+    mutate(first_visit = NA)
+  
+  for (i in 1:nrow(data)) {
+    x <- data$x[i]
+    y <- data$y[i]
+    time_step <- data$Time[i]
+    
+    grid_index <- which(grid$x == x & grid$y == y)
+    
+    if (length(grid_index) == 1 && grid$mask[grid_index] == 1 && is.na(grid$first_visit[grid_index])) {
+      grid$first_visit[grid_index] <- time_step
+    }
+  }
+  
+  return(grid)
+}
+
+first_visits <- find_first_visits(data, grid)
+```
+
+## Optional: Plot First Visits
+```{r}
+# Plot the first visits
+ggplot(first_visits |> filter(first_visit != "NA"), aes(x = x, y = y, fill = first_visit)) +
+  geom_tile(linewidth = 2) +
+  labs(TITLE = "First Visits over time") +
+  theme_minimal()
+```
+# Calculate NEG for total maze
+```{r}
+# Function to calculate total maze cumulative percentages based on time steps
+calculate_cumulative_percentages <- function(grid) {
+  # Sort the grid by time step in ascending order
+  grid <- grid %>%
+    filter(mask == 1) %>%
+    arrange(first_visit)
+  
+  # Total number of squares available
+  total_squares <- sum(grid$mask == 1, na.rm = TRUE)
+  
+ grid <- grid %>%
+  mutate(percentage_increase = if_else(!is.na(first_visit), 100 / total_squares, 0))
+  
+  # Add a column for cumulative percentage
+  grid <- grid %>%
+    mutate(cumulative_percentage = cumsum(percentage_increase))
+  
+  return(grid)
+}
+
+cumulative_grid.T <- calculate_cumulative_percentages(first_visits)
+max(cumulative_grid.T$cumulative_percentage)
+```
+## Optional: Plots NEG for total maze over time
+# Plot the cumulative percentages over time with a line plot
+ggplot(cumulative_grid.T, aes(x = first_visit, y = cumulative_percentage)) +
+  geom_line() +
+  labs(x = "Time Step", y = "Total Maze NEG (%)", title = "Novel Exploration Growth Over Time for Total Maze") +
+  theme_minimal()
+```
+# Create Arm Masks
+```{r}
+# Function to add OpenMask and ClosedMask to the grid
+add_arm_masks <- function(grid, open_arm_plane, closed_arm_plane) {
+  grid <- grid %>%
+    filter(mask == 1) %>%
+    mutate(OpenMask = if_else(x >= open_arm_plane[1,2] & x <= open_arm_plane[2,2] & mask == 1, 1, 0),
+           ClosedMask = if_else(y >= closed_arm_plane[2,3] & y <= closed_arm_plane[1,3] & mask == 1, 1, 0))
+  return(grid)
+}
+
+interpolated_grid_with_masks <- add_arm_masks(first_visits, Open_Arm_Plane, Closed_Arm_Plane)
+```
+
+# Optional: Plot Arm Masks
+```{r}
+interpolated_grid_with_masks.2 <- interpolated_grid_with_masks |> 
+  pivot_longer(cols = c(OpenMask, ClosedMask), names_to = "MaskType", values_to = "MaskValue")
+
+# plot the grid with masks
+ggplot(interpolated_grid_with_masks.2, aes(x = x, y = y, fill = as.factor(MaskValue))) +
+  geom_tile() +
+  theme_minimal() +
+  facet_wrap(~MaskType) +
+  labs(title = "Maze Grid with Arm Masks",
+       x = "X Coordinate",
+       y = "Y Coordinate")
+```
+# Calculate Open Arm NEG over time
+```{r}
+# Function to calculate open arm cumulative percentages based on time steps
+calculate_cumulative_percentages.Op <- function(grid) {
+  # Sort the grid by time step in ascending order
+  grid <- grid %>%
+    filter(mask == 1 & OpenMask == 1) %>%
+    arrange(first_visit)
+  
+  # Total number of squares available
+  total_squares <- sum(grid$mask == 1, na.rm = TRUE)
+  
+ grid <- grid %>%
+  mutate(percentage_increase = if_else(!is.na(first_visit), 100 / total_squares, 0))
+  
+  # Add a column for cumulative percentage
+  grid <- grid %>%
+    mutate(cumulative_percentage = cumsum(percentage_increase))
+  
+  return(grid)
+}
+
+cumulative_grid.Op <- calculate_cumulative_percentages.Op(interpolated_grid_with_masks)
+#max(cumulative_grid.Op$cumulative_percentage) # Uncomment to view open arm NEG final value
+```
+## Plot open arm NEG over time
+```{r}
+# Plot the cumulative percentages over time with a line plot
+ggplot(cumulative_grid.Op, aes(x = first_visit, y = cumulative_percentage)) +
+  geom_line() +
+  labs(x = "Time Step", y = "Open Arm NEG (%)", title = "Novel Exploration Growth Over Time for Open Arms") +
+  theme_minimal()
+```
+# Calculate Closed Arm NEG over time
+```{r}
+# Function to calculate total maze cumulative percentages based on time steps
+calculate_cumulative_percentages.Cl <- function(grid) {
+  # Sort the grid by time step in ascending order
+  grid <- grid %>%
+    filter(mask == 1 & ClosedMask == 1) %>%
+    arrange(first_visit)
+  
+  # Total number of squares available
+  total_squares <- sum(grid$mask == 1, na.rm = TRUE)
+  
+ grid <- grid %>%
+  mutate(percentage_increase = if_else(!is.na(first_visit), 100 / total_squares, 0))
+  
+  # Add a column for cumulative percentage
+  grid <- grid %>%
+    mutate(cumulative_percentage = cumsum(percentage_increase))
+  
+  return(grid)
+}
+
+cumulative_grid.Cl <- calculate_cumulative_percentages.Cl(interpolated_grid_with_masks)
+# max(cumulative_grid.Cl$cumulative_percentage) # Uncomment to view closed arm NEG final value
+```
+## Optional: Plot closed arm NEG
+```{r}
+# Plot the cumulative percentages over time with a line plot
+ggplot(cumulative_grid.Cl, aes(x = first_visit, y = cumulative_percentage)) +
+  geom_line() +
+  labs(x = "Time Step", y = "Closed Arm NEG (%)", title = "Novel Exploration Growth Over Time for Closed Arms") +
+  theme_minimal()
+```
+
+# Combined Plot All Time Series
+```{r}
+# Data preparation for labels
+max_values <- bind_rows(
+  cumulative_grid.T %>% summarize(first_visit = max(first_visit, na.rm = TRUE), cumulative_percentage = max(cumulative_percentage, na.rm = TRUE)) %>% mutate(label = "Total Maze", color = "#6a396e"),
+  cumulative_grid.Op %>% summarize(first_visit = max(first_visit, na.rm = TRUE), cumulative_percentage = max(cumulative_percentage, na.rm = TRUE)) %>% mutate(label = "Open Arm", color = "#6796a8"),
+  cumulative_grid.Cl %>% summarize(first_visit = max(first_visit, na.rm = TRUE), cumulative_percentage = max(cumulative_percentage, na.rm = TRUE)) %>% mutate(label = "Closed Arm", color = "#b37460")
+)
+```
+
+## Optional: Plot Total, Open and Closed Arm NEG over time in one plot
+```{r}
+ggplot() +
+  geom_line(data = cumulative_grid.T, aes(x = first_visit, y = cumulative_percentage), color = "#6a396e") +
+  geom_line(data = cumulative_grid.Op, aes(x = first_visit, y = cumulative_percentage), color = "#6796a8") +
+  geom_line(data = cumulative_grid.Cl, aes(x = first_visit, y = cumulative_percentage), color = "#b37460") +
+  # Add labels to the lines for better identification
+  geom_label(data = max_values, aes(x = first_visit, y = cumulative_percentage, label = label, fill = color), color = "white", hjust = -0.1) +
+  scale_fill_identity() +  # Ensure the fill color is used directly from the data
+  labs(x = "Time Step", y = "NEG (%)", title = "Novel Exploration Growth Over Time") +
+  xlim(0, max(max_values$first_visit + 50))+
+  theme_minimal()
+```
