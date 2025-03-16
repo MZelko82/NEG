@@ -161,7 +161,9 @@ Suggested modifications:
 
 - [x] Data import and processing
 - [ ] fix pathing from NEG_Calc_v2.0 qmd to v2 directories and to /R/ directory
-- [] Spatial analysis
+- [ ] Simulate data to test functions
+   - Create function to simulate xslx data for two groups using exploratory phenotypic patterns (Exploratory, Delayed and Avoidant)
+- [ ] Spatial analysis
    - spatial_analysis.R is not replicating function in NEG_Calc_v2.0 qmd. Check grid creation function and update
 - [ ] Visualization and statistics
 - [ ] Configuration handling
