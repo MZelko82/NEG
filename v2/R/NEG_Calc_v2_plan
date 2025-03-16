@@ -160,6 +160,7 @@ Suggested modifications:
 # Progress
 
 - [x] Data import and processing
+- [ ] fix pathing from NEG_Calc_v2.0 qmd to v2 directories and to /R/ directory
 - [] Spatial analysis
    - spatial_analysis.R is not replicating function in NEG_Calc_v2.0 qmd. Check grid creation function and update
 - [ ] Visualization and statistics
