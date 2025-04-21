@@ -29,15 +29,17 @@ Once we have the NEG time series, we can use the differences between arm types t
 <br>
 
 ## Repository Overview
+> 🔄 **Note:** Please visit the [`v2`](https://github.com/MZelko82/NEG/tree/main/v2) folder for the current version of the workflow and updated documents.
 
-- **NEG_Calc.qmd:** Quarto document used to processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed)
-- **XYTest.csv:** CSV file for testing NEG_Calc and to show required raw data strcture including column names
-- **MCP_Comp.qmd** Quarto document showing how to model and compare single and dual phase change point models to data using a simulated dataset
-- **GAM_Reg.qmd** Quarto document showing how to assess effects of interest on exploration growth using Bayesian generalised additive regression on a simulated dataset 
+- **NEG_Calc_v2.qmd:** Quarto document used to processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed, Total)
+- **Raw data-#1-Trial 1.xlsx:** CSV file for testing NEG_Calc and to show required raw data strcture including column names
+- **MCP_Comp_v2.qmd** Quarto document showing how to model and compare single and dual phase change point models to data using a simulated dataset
+- **GAM_Reg_v2.qmd** Quarto document showing how to assess effects of interest on exploration growth using Bayesian generalised additive regression on a simulated dataset 
 
 ## Key Features
 
 - **Pre-processing:** Pre-process coordinates into Novel Exploration Growth over time
+    - Pre-processing includes a custom function that detects when XY coordinates for individual samples are not aligned with origin (0,0) and uses a clustering algorithm to             shift the location based on where the centre zone points are located     
 - **Bayesian Change-point Analysis** Localise change-points in each time series to evaluate phasic nature of exploration
     - This is completed primarily through the use of the [mcp](https://lindeloev.github.io/mcp/) package  
 - **Bayesian Generalised Additive Model Analysis** Compare effects of interest using GAM models
@@ -45,7 +47,7 @@ Once we have the NEG time series, we can use the differences between arm types t
 
 ## Usage
 
-Users will first establish NEG time series via **NEG_Calc.qmd**. The change points in the NEG time series will then be assessed via **MCP_Comp.qmd** to establish their phasic properties. Finally, the NEG time series will be analysed using either **GAM_Reg.qmd** or a generalised linear regression model with a binomial link family in brms (Frequentist alternatives uing mgcv are also provided). Packages such as [bayestestR](https://easystats.github.io/bayestestR/) and [emmeans](https://github.com/rvlenth/emmeans) can then be used to estimate and visualise effects of interest.
+Users will first process raw trial data, including shifting coordinates to ensure all trials overlap so that a grid can be created and utilised via **NEG_Calc.qmd**. The change points in the NEG time series will then be assessed via **MCP_Comp.qmd** to establish their phasic properties. Finally, the NEG time series will be analysed using either **GAM_Reg.qmd** or a generalised linear regression model with a binomial link family in brms (Frequentist alternatives uing mgcv are also provided). Packages such as [bayestestR](https://easystats.github.io/bayestestR/) and [emmeans](https://github.com/rvlenth/emmeans) can then be used to estimate and visualise effects of interest.
 
 For a more detailed workflow, see the publication below. 
 
