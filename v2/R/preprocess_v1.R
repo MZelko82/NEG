@@ -526,9 +526,6 @@ read_and_clean_data <- function(file_path, ...) {  # Add ... to capture addition
     
     # Apply center-based shift correction with error handling
     tryCatch({
-      cat("\nAttempting center-based shift correction...\n")
-      source("R/center_shift_correction.R", local = TRUE)  # Load functions in local environment
-      
       # Check if required functions exist
       if (!exists("detect_center_shift") || !exists("apply_center_shift")) {
         stop("Required functions not loaded properly")
@@ -683,4 +680,294 @@ read_and_clean_data <- function(file_path, ...) {  # Add ... to capture addition
   }
   
   return(result)
+}
+
+#' Create complete arm grids
+#' @param data Dataframe containing trial data
+#' @return Dataframe containing grid data
+create_complete_arm_grids <- function(data) {
+  # Filter data for each area
+  open_arms_data <- data %>% 
+    filter(InOpen == 1, InCentre == 0) %>%
+    filter(!is.na(x_m) & !is.na(y_m))
+  
+  closed_arms_data <- data %>% 
+    filter(InClosed == 1, InCentre == 0) %>%
+    filter(!is.na(x_m) & !is.na(y_m))
+  
+  # Get center zone coordinates
+  center_data <- data %>%
+    filter(InCentre == 1) %>%
+    filter(!is.na(x_m) & !is.na(y_m))
+  
+  # Find the boundaries of the center zone
+  center_x_min <- min(center_data$x_m, na.rm = TRUE)
+  center_x_max <- max(center_data$x_m, na.rm = TRUE)
+  center_y_min <- min(center_data$y_m, na.rm = TRUE)
+  center_y_max <- max(center_data$y_m, na.rm = TRUE)
+  
+  # For open arms (along y-axis)
+  # Create depth bands every 2cm starting from the edge of center zone
+  open_positive_depths <- seq(from = center_y_max, 
+                            to = max(open_arms_data$y_m, na.rm = TRUE), 
+                            by = 2)
+  open_negative_depths <- seq(from = center_y_min, 
+                            to = min(open_arms_data$y_m, na.rm = TRUE), 
+                            by = -2)
+  
+  # Create bands for open arms
+  open_bands <- bind_rows(
+    # Positive y direction bands
+    tibble(
+      depth_start = head(open_positive_depths, -1),
+      depth_end = tail(open_positive_depths, -1),
+      x_min = min(open_arms_data$x_m, na.rm = TRUE),
+      x_max = max(open_arms_data$x_m, na.rm = TRUE)
+    ),
+    # Negative y direction bands
+    tibble(
+      depth_start = head(open_negative_depths, -1),
+      depth_end = tail(open_negative_depths, -1),
+      x_min = min(open_arms_data$x_m, na.rm = TRUE),
+      x_max = max(open_arms_data$x_m, na.rm = TRUE)
+    )
+  ) %>%
+    mutate(
+      band_id = row_number(),
+      grid_type = "open"
+    )
+  
+  # For closed arms (along x-axis)
+  # Create depth bands every 2cm starting from the edge of center zone
+  closed_positive_depths <- seq(from = center_x_max, 
+                              to = max(closed_arms_data$x_m, na.rm = TRUE), 
+                              by = 2)
+  closed_negative_depths <- seq(from = center_x_min, 
+                              to = min(closed_arms_data$x_m, na.rm = TRUE), 
+                              by = -2)
+  
+  # Create bands for closed arms
+  closed_bands <- bind_rows(
+    # Positive x direction bands
+    tibble(
+      depth_start = head(closed_positive_depths, -1),
+      depth_end = tail(closed_positive_depths, -1),
+      y_min = min(closed_arms_data$y_m, na.rm = TRUE),
+      y_max = max(closed_arms_data$y_m, na.rm = TRUE)
+    ),
+    # Negative x direction bands
+    tibble(
+      depth_start = head(closed_negative_depths, -1),
+      depth_end = tail(closed_negative_depths, -1),
+      y_min = min(closed_arms_data$y_m, na.rm = TRUE),
+      y_max = max(closed_arms_data$y_m, na.rm = TRUE)
+    )
+  ) %>%
+    mutate(
+      band_id = row_number(),
+      grid_type = "closed"
+    )
+  
+  # Combine all bands
+  total_bands <- bind_rows(
+    open_bands,
+    closed_bands
+  )
+  
+  # Create total grid type (combining open and closed bands)
+  total_grid <- bind_rows(
+    open_bands %>% select(-grid_type),
+    closed_bands %>% select(-grid_type)
+  ) %>%
+  mutate(grid_type = "total")
+  
+  # Create nested structure
+  grid_data <- bind_rows(
+    total_bands,
+    total_grid
+  ) %>%
+  group_by(grid_type) %>%
+  nest()
+  
+  return(grid_data)
+}
+
+
+#' Calculate first visits and cumulative percentages
+#' @param trial_data Dataframe containing trial data
+#' @param grid_data Dataframe containing grid data
+#' @return Dataframe containing first visits and cumulative percentages
+calculate_grid_exploration <- function(trial_data, grid_data) {
+  # Extract grid coordinates for each type
+  grid_types <- grid_data %>%
+    unnest(data) %>%
+    split(.$grid_type)
+  
+  # Function to process each grid type
+  process_grid_type <- function(trial_df, grid_type_df) {
+    # Safety check - ensure we have data
+    if (nrow(trial_df) == 0 || nrow(grid_type_df) == 0) {
+      return(NULL)
+    }
+    
+    # Get total number of depth bands for percentage calculation
+    total_bands <- nrow(grid_type_df) / 2  # Divide by 2 since we have bands in both directions
+    
+    if (total_bands == 0) {
+      return(NULL)
+    }
+    
+    # Create a vector to track visited bands
+    visited <- rep(FALSE, nrow(grid_type_df))
+    names(visited) <- grid_type_df$band_id
+    
+    # Process each timepoint
+    result <- trial_df %>%
+      mutate(
+        is_new_visit = map_lgl(seq_len(n()), function(i) {
+          x <- x_m[i]
+          y <- y_m[i]
+          
+          # Check which band contains this point
+          if (grid_type_df$grid_type[1] == "open") {
+            # For open arms, check y-coordinate against depth bands
+            band_idx <- which(
+              y >= grid_type_df$depth_start & 
+              y <= grid_type_df$depth_end &
+              x >= grid_type_df$x_min &
+              x <= grid_type_df$x_max
+            )
+          } else if (grid_type_df$grid_type[1] == "closed") {
+            # For closed arms, check x-coordinate against depth bands
+            band_idx <- which(
+              x >= grid_type_df$depth_start & 
+              x <= grid_type_df$depth_end &
+              y >= grid_type_df$y_min &
+              y <= grid_type_df$y_max
+            )
+          } else {
+            # For total, check both open and closed conditions
+            band_idx <- which(
+              (y >= grid_type_df$depth_start & 
+               y <= grid_type_df$depth_end &
+               x >= grid_type_df$x_min &
+               x <= grid_type_df$x_max) |
+              (x >= grid_type_df$depth_start & 
+               x <= grid_type_df$depth_end &
+               y >= grid_type_df$y_min &
+               y <= grid_type_df$y_max)
+            )
+          }
+          
+          # If point is in a band and band hasn't been visited
+          if (length(band_idx) > 0 && !visited[band_idx]) {
+            visited[band_idx] <<- TRUE
+            return(TRUE)
+          }
+          return(FALSE)
+        }),
+        cumulative_visits = cumsum(is_new_visit),
+        exploration_percentage = (cumulative_visits / total_bands) * 100
+      )
+    
+    return(result)
+  }
+  
+  # Process each grid type and combine results
+  results <- map(grid_types, function(grid_type_df) {
+    result <- process_grid_type(trial_data, grid_type_df)
+    if (is.null(result)) {
+      # Return empty dataframe with correct structure if processing failed
+      return(trial_data %>% 
+             mutate(
+               is_new_visit = FALSE,
+               cumulative_visits = 0,
+               exploration_percentage = 0
+             ))
+    }
+    return(result)
+  }) %>%
+    bind_rows(.id = "grid_type")
+  
+  return(results)
+}
+
+# Improved approach to process multiple files
+# Function to process multiple files with customizable pattern
+process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx$", max_files = NULL) {
+  # List all trial files matching the pattern
+  trial_files <- list.files(data_path, 
+                           pattern = file_pattern,  # User-defined pattern
+                           full.names = TRUE)
+  
+  # Display found files (optional)
+  cat("Found", length(trial_files), "files matching pattern:", file_pattern, "\n")
+  cat("Example files:", paste(basename(head(trial_files, 3)), collapse = ", "), "...\n")
+  
+  # Optionally limit number of files for testing
+  if (!is.null(max_files)) {
+    trial_files <- trial_files[1:min(length(trial_files), max_files)]
+  }
+  
+  # Create empty list to store results
+  all_exploration_results <- list()
+  
+  # Process one file at a time
+  for (i in seq_along(trial_files)) {
+    f <- trial_files[i]
+    cat("Processing file", i, "of", length(trial_files), ":", basename(f), "\n")
+    
+    # Try to process this file, continue to next file if error
+    tryCatch({
+      # Read and preprocess single file
+      trial_data <- read_and_clean_data(f)
+      
+      # Extract metadata for final results
+      metadata <- trial_data %>%
+        select(RatID, Diet, Strain, Treatment)
+      
+      # Unnest data for this file only
+      trial_unnested <- trial_data %>%
+        unnest(data)
+      
+      # Free memory
+      rm(trial_data)
+      gc()
+      
+      # Create grid for this trial
+      trial_grid <- create_complete_arm_grids(trial_unnested)
+      
+      # Calculate exploration
+      trial_unnested <- trial_unnested %>%
+        mutate(x_mr = round(x_m), y_mr = round(y_m))
+      
+      exploration_data <- calculate_grid_exploration(trial_unnested, trial_grid)
+      
+      # Add to results
+      trial_id <- paste(metadata$RatID, metadata$Diet, metadata$Strain, sep="_")
+      
+      exploration_data <- exploration_data %>%
+        mutate(
+          RatID = metadata$RatID,
+          Diet = metadata$Diet,
+          Strain = metadata$Strain,
+          Treatment = metadata$Treatment,
+          trial_id = trial_id
+        )
+      
+      all_exploration_results[[i]] <- exploration_data
+      
+      # Clean up large objects to free memory
+      rm(trial_unnested, trial_grid, exploration_data)
+      gc()
+      
+    }, error = function(e) {
+      cat("ERROR processing file:", e$message, "\n")
+    })
+  }
+  
+  # Combine all results at the end
+  all_results <- bind_rows(all_exploration_results)
+  
+  return(all_results)
 }
