@@ -152,3 +152,52 @@ ggplot(trials_with_exploration$exploration_data[[1]],
        color = "Arm Type") +
   ylim(0, 100)
 ```
+
+# Optional: Process multiple files
+## Step 1: Multiple Files Processing
+
+If you need to process multiple files, you can use this approach:
+
+```{r process_multiple_files, eval=FALSE}
+# User-configurable parameters
+file_pattern <- "^NEG_Test.*\\.xlsx$"  # Adjust this pattern to match your files
+data_folder <- "Raw/Trial"             # Folder containing your data files
+
+# Process multiple files with user-defined pattern
+data_path <- paste0(getwd(), "/", data_folder)
+
+# Process files with the specified pattern
+all_exploration_data <- process_multiple_files(data_path, file_pattern)
+```
+
+## Step 8: Summarize Exploration by Groups (Optional)
+
+If you have multiple trials with different conditions, you can create summary visualizations:
+
+```{r summarize_exploration, eval=FALSE}
+# Create summary data
+exploration_summary <- all_exploration_data %>%
+  group_by(Diet, Strain, grid_type, Time) %>%
+  summarise(
+    mean_exploration_percentage = mean(exploration_percentage), 
+    sd_exploration_percentage = sd(exploration_percentage),
+    .groups = 'drop'
+  )
+
+# Plot summary
+ggplot(exploration_summary %>% filter(grid_type != "total")) +
+  geom_line(aes(x = Time, y = mean_exploration_percentage, 
+                color = grid_type, 
+                group = interaction(Diet, Strain, grid_type))) +
+  geom_ribbon(aes(x = Time, 
+                 ymin = mean_exploration_percentage - sd_exploration_percentage, 
+                 ymax = mean_exploration_percentage + sd_exploration_percentage, 
+                 fill = grid_type), alpha = 0.2) +
+  scale_color_discrete(name = "Arm Type") +
+  scale_fill_discrete(name = "Arm Type") +
+  labs(title = "Novel Exploration Growth by Group",
+       x = "Time (s)",
+       y = "NEG (%)") +
+  facet_grid(Diet ~ Strain) +
+  theme_minimal()
+```
