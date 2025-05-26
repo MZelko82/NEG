@@ -10,7 +10,7 @@ Novel Exploration Growth (NEG) takes the theoretical motivations of approach and
 
 <br>
 
-<img src="https://github.com/MZelko82/NEG/blob/main/Images/Fig1a.png" alt="From Total Time to Novel Exploration" width="600">
+<img src="https://github.com/MZelko82/NEG/blob/main/Images/Fig1b.png" alt="From Total Time to Novel Exploration" width="600">
 
 <br>
 
