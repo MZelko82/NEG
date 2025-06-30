@@ -1,8 +1,7 @@
 # Novel Exploration Growth (NEG)
 
-## Introduction
 
-Welcome to the repository for the project associated with the publication **"Novel Exploration Growth Quantifies Anxiety-like Behaviour in the Elevated Plus Maze"**. This repository contains the code and data analysis tools used in the research.
+Welcome to the repository for the project associated with the publication **"Resolving anxiety-like behaviour inconsistencies in the elevated plus maze by tracking exploration depth and timing"**. This repository contains the code and data analysis tools used in the research.
 
 ## Novel Exploration Growth as a measure of Anxiety-like Behaviour
 
@@ -71,6 +70,8 @@ If you use this code or find the results of our research helpful, please cite ou
 
 > Zelko, M; Robinson, S.R; Hill-Yardin, E, Nasser, H. "Novel Exploration Growth Quantifies Anxiety-like Behaviour in the Elevated Plus Maze,".
 > Preprint available at https://biorxiv.org/cgi/content/short/2024.06.10.598202v2
+
+**Update 28/05/2025:** The paper has been accepted into Behavior Research Methods. Updated links to follow
 
 ## Version History
 
