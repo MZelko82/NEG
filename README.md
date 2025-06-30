@@ -28,18 +28,26 @@ Once we have the NEG time series, we can use the differences between arm types t
 <br>
 <br>
 
-## Repository Overview
-> 🔄 **Note:** Please visit the [`v2`](https://github.com/MZelko82/NEG/tree/main/v2) folder for the current version of the workflow and updated documents.
+## Repository Structure
 
-- **NEG_Calc_v2.qmd:** Quarto document used to processes XY coordinate time series data into NEG time series for the total maze and by arm type (Open, Closed, Total)
-- **Raw data-#1-Trial 1.xlsx:** CSV file for testing NEG_Calc and to show required raw data strcture including column names
-- **MCP_Comp_v2.qmd** Quarto document showing how to model and compare single and dual phase change point models to data using a simulated dataset
-- **GAM_Reg_v2.qmd** Quarto document showing how to assess effects of interest on exploration growth using Bayesian generalised additive regression on a simulated dataset 
+### Current Version (v2.0)
+- **analysis/**: Current analysis workflows (Quarto documents)
+  - `NEG_Calc.qmd`: Processes XY coordinate time series data into NEG time series
+  - `MCP_Comp.qmd`: Bayesian change-point analysis for phasic exploration patterns
+  - `GAM_Reg.qmd`: Bayesian GAM analysis for comparing effects of interest
+- **R/**: Preprocessing functions and utilities
+  - `preprocess.R`: Core preprocessing functions including coordinate alignment correction
+- **test_data/**: Example datasets for testing and validation
+- **visualisations/**: Interactive web-based visualization demonstrating mouse behavior patterns
+- **Images/**: Figures and visualization assets
+
+### Legacy Versions
+- **legacy/v1/**: Original implementation (deprecated)
 
 ## Key Features
 
 - **Pre-processing:** Pre-process coordinates into Novel Exploration Growth over time
-    - Pre-processing includes a custom function that detects when XY coordinates for individual samples are not aligned with origin (0,0) and uses a clustering algorithm to             shift the location based on where the centre zone points are located     
+    - Pre-processing includes a custom function that detects when XY coordinates for individual samples are not aligned with origin (0,0) and uses a clustering algorithm to shift the location based on where the centre zone points are located     
 - **Bayesian Change-point Analysis** Localise change-points in each time series to evaluate phasic nature of exploration
     - This is completed primarily through the use of the [mcp](https://lindeloev.github.io/mcp/) package  
 - **Bayesian Generalised Additive Model Analysis** Compare effects of interest using GAM models
@@ -47,9 +55,38 @@ Once we have the NEG time series, we can use the differences between arm types t
 
 ## Usage
 
-Users will first process raw trial data, including shifting coordinates to ensure all trials overlap so that a grid can be created and utilised via **NEG_Calc.qmd**. The change points in the NEG time series will then be assessed via **MCP_Comp.qmd** to establish their phasic properties. Finally, the NEG time series will be analysed using either **GAM_Reg.qmd** or a generalised linear regression model with a binomial link family in brms (Frequentist alternatives uing mgcv are also provided). Packages such as [bayestestR](https://easystats.github.io/bayestestR/) and [emmeans](https://github.com/rvlenth/emmeans) can then be used to estimate and visualise effects of interest.
+Users will first process raw trial data, including shifting coordinates to ensure all trials overlap so that a grid can be created and utilised via **analysis/NEG_Calc.qmd**. The change points in the NEG time series will then be assessed via **analysis/MCP_Comp.qmd** to establish their phasic properties. Finally, the NEG time series will be analysed using either **analysis/GAM_Reg.qmd** or a generalised linear regression model with a binomial link family in brms (Frequentist alternatives using mgcv are also provided). Packages such as [bayestestR](https://easystats.github.io/bayestestR/) and [emmeans](https://github.com/rvlenth/emmeans) can then be used to estimate and visualise effects of interest.
 
 For a more detailed workflow, see the publication below. 
+
+## Quick Start
+
+1. Clone the repository
+2. Install required R packages (see analysis files for dependencies)
+3. Use the test data in `test_data/` to run the analysis workflows
+4. Start with `analysis/NEG_Calc.qmd` for basic preprocessing and NEG calculation
+
+### Running the Analysis
+
+**Option 1: From Repository Root (Recommended)**
+```r
+# Set working directory to repository root
+setwd("/path/to/NEG_Overview")
+
+# Render analysis files
+rmarkdown::render("analysis/NEG_Calc.qmd")
+rmarkdown::render("analysis/MCP_Comp.qmd")
+rmarkdown::render("analysis/GAM_Reg.qmd")
+```
+
+**Option 2: From Analysis Directory**
+```r
+# Navigate to analysis directory
+setwd("/path/to/NEG_Overview/analysis")
+
+# The .qmd files will automatically detect the correct paths
+rmarkdown::render("NEG_Calc.qmd")
+```
 
 ## Citation
 
@@ -57,6 +94,11 @@ If you use this code or find the results of our research helpful, please cite ou
 
 > Zelko, M; Robinson, S.R; Hill-Yardin, E, Nasser, H. "Novel Exploration Growth Quantifies Anxiety-like Behaviour in the Elevated Plus Maze,".
 > Preprint available at https://biorxiv.org/cgi/content/short/2024.06.10.598202v2
+
+## Version History
+
+- **v2.0** (Current): Streamlined analysis workflows with improved preprocessing
+- **v1.0** (Legacy): Original implementation (archived in `legacy/v1/`)
 
 ## License
 

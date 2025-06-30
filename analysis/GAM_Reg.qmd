@@ -1,16 +1,22 @@
 ---
 title: "GAM_Reg"
 format: html
-editor: visual
 ---
+
 # Generalized Additive Model Regression (Bayesian & Frequentist)
+
 # Author: Matt Zelko (Frequentist additions by Claude)
+
 # R x64 4.4.0
+
 # RStudio 2024.04.2+764 "Chocolate Cosmos" Release
+
 # This code demonstrates how to specify both Bayesian and Frequentist GAM models to assess the impact of predictors of interest on Novel Exploration Growth
+
 # It demonstrates the workflow for the total maze, but the same code can be run by arm type to generate conditional effects
 
 # Load Packages
+
 ```{r}
 library(tidyverse)
 library(brms)      # For Bayesian GAMs
@@ -20,8 +26,11 @@ library(gratia)    # For Frequentist GAM visualization
 ```
 
 # Simulate Data
+
 ## Functions
+
 4 Parameter Double Sigmoid Growth
+
 ```{r}
 sw_dbl_log <- function(a, b, c, d, Time){
   ((50)/(1+exp(-a*Time + b)))+((50)/(1+exp(-c*Time + d)))
@@ -29,6 +38,7 @@ sw_dbl_log <- function(a, b, c, d, Time){
 ```
 
 ## Total Exploration by Phenotype
+
 ```{r}
 nn = 10
 Raw<- tibble(n = 1:(nn*3),
@@ -48,6 +58,7 @@ Raw<- tibble(n = 1:(nn*3),
 ```
 
 ### Plot Total Exploration by Phenotype
+
 ```{r}
 ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
   geom_line(linewidth =1)+ylim(0,100)+
@@ -58,8 +69,8 @@ ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
 
 ## Centre continuous predictors where necessary
 
-
 # Bayesian GAM Regression for Total Maze Exploration
+
 ```{r}
 fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
              data = Raw,
@@ -69,6 +80,7 @@ fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)),
 ```
 
 ## Bayesian Model Summary and Diagnostics
+
 ```{r}
 summary(fit.GAM)
 plot(fit.GAM)
@@ -78,7 +90,9 @@ pp_check(fit.GAM)
 ```
 
 # Frequentist Alternative using mgcv
+
 ## Note: Switch to this section if you prefer classical inference or need faster computation
+
 ```{r}
 # Fit GAM using mgcv
 fit.gam.freq <- gam(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + s(n, bs = "re"), 
@@ -109,6 +123,7 @@ appraise(fit.gam.freq)
 ```
 
 ## Model Comparison (if you have multiple models)
+
 ```{r}
 # AIC/BIC comparison (Frequentist alternative to LOO)
 # Example with a simpler model
@@ -124,12 +139,21 @@ predictions.freq <- predict(fit.gam.freq, type = "response", se.fit = TRUE)
 ```
 
 # Note on Interpretation Differences
+
 # - Bayesian analysis provides full posterior distributions and credible intervals
+
 # - Frequentist analysis provides point estimates and confidence intervals
+
 # - Both approaches should give similar results for well-specified models
+
 # - Frequentist computation is typically faster but provides less uncertainty information
+
 # - Choose based on your needs for:
-#   * Computational speed (Frequentist is faster)
-#   * Uncertainty quantification (Bayesian provides more detail)
-#   * Prior knowledge incorporation (Only available in Bayesian)
-#   * Inference type (Frequentist vs Bayesian interpretation)
+
+# \* Computational speed (Frequentist is faster)
+
+# \* Uncertainty quantification (Bayesian provides more detail)
+
+# \* Prior knowledge incorporation (Only available in Bayesian)
+
+# \* Inference type (Frequentist vs Bayesian interpretation)

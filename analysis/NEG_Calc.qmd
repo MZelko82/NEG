@@ -1,7 +1,13 @@
 ---
 title: "Novel Exploration Growth Analysis in Elevated Plus Maze"
 author: "Matt Zelko"
-format: html            # Default path that can be overridden
+format: 
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    code-fold: true
+    code-summary: "Show code"
 ---
 
 ```{r setup, include=FALSE}
@@ -40,13 +46,27 @@ The first step is to load the data files and run the preprocessing functions:
 
 ```{r load_preprocess}
 # Load preprocessing functions
-source("v2/R/preprocess_v1.R")
+# Handle both running from root directory and from analysis/ directory
+if (file.exists("R/preprocess.R")) {
+  source("R/preprocess.R")
+} else if (file.exists("../R/preprocess.R")) {
+  source("../R/preprocess.R")
+} else {
+  stop("Cannot find preprocess.R. Please ensure you're running from the repository root or analysis directory.")
+}
 ```
 
 # Example usage - load a single file
 ```{r load_single_file}
 # Replace with your file path
-file_path <- paste0(getwd(), "/Raw/Trial/NEG_Test_1.xlsx")
+# Handle both running from root directory and from analysis/ directory
+if (file.exists("test_data/NEG_Test_1.xlsx")) {
+  file_path <- "test_data/NEG_Test_1.xlsx"
+} else if (file.exists("../test_data/NEG_Test_1.xlsx")) {
+  file_path <- "../test_data/NEG_Test_1.xlsx"
+} else {
+  stop("Cannot find test data. Please ensure test_data/NEG_Test_1.xlsx exists.")
+}
 
 # Read and preprocess the data file
 trials_data <- read_and_clean_data(file_path)
@@ -58,21 +78,28 @@ glimpse(trials_data)
 glimpse(trials_data$data[[1]])
 ```
 
-## Step 2: Visualize Raw and Corrected Trajectories (Optional)
+## Step 2: Unnest Data for Analysis
 
-The preprocessing includes center shift correction to normalize coordinates around (0,0). We can visualize this to verify the correction:
+First, we need to unnest the data structure for further analysis:
 
-```{r visualize_trajectory, eval=FALSE}
-# Function to unnest data for plotting
+```{r unnest_data}
+# Function to unnest data for plotting and analysis
 unnest_trials <- function(nested_data) {
   nested_data %>%
     unnest(data) %>%
     group_by(filename, RatID, Diet, Strain, Treatment)
 }
 
-# Plot original vs shifted coordinates
+# Unnest the trials data for use in subsequent steps
 trials_data_unnested <- unnest_trials(trials_data)
+```
 
+## Step 3: Visualize Raw and Corrected Trajectories (Optional)
+
+The preprocessing includes center shift correction to normalize coordinates around (0,0). We can visualize this to verify the correction:
+
+```{r visualize_trajectory, eval=FALSE}
+# Plot original vs shifted coordinates
 ggplot(trials_data_unnested) +
   # Original coordinates
   geom_path(aes(x = X, y = Y), color = "grey", alpha = 0.5) +
@@ -86,7 +113,7 @@ ggplot(trials_data_unnested) +
        subtitle = "Grey = Original, Blue = Corrected")
 ```
 
-## Step 3: Create Grid for Exploration Analysis
+## Step 4: Create Grid for Exploration Analysis
 
 We need to create a grid of discrete areas to track where the animal has explored:
 
@@ -95,9 +122,9 @@ We need to create a grid of discrete areas to track where the animal has explore
 arm_grids <- create_complete_arm_grids(trials_data_unnested)
 ```
 
-## Step 4: Visualize the Grid (Optional)
+## Step 5: Visualize the Grid (Optional)
 
-```{r visualize_grid, eval=FALSE}
+```{r visualize_grid}
 # Plot the created grid bands for each arm type
 ggplot() +
   # For open arms (vertical bands)
@@ -124,7 +151,7 @@ ggplot() +
   theme_minimal()
 ```
 
-## Step 5: Calculate Novel Exploration Growth
+## Step 6: Calculate Novel Exploration Growth
 
 ```{r calculate_exploration}
 # Prepare data for exploration calculation
@@ -136,7 +163,7 @@ trials_with_exploration <- trials_data %>%
   mutate(exploration_data = map(data2, ~calculate_grid_exploration(., arm_grids)))
 ```
 
-## Step 6: Visualize Novel Exploration Growth
+## Step 7: Visualize Novel Exploration Growth
 
 ```{r plot_exploration}
 # Plot exploration percentage over time by arm type
@@ -151,18 +178,25 @@ ggplot(trials_with_exploration$exploration_data[[1]],
   ylim(0, 100)
 ```
 
+**This plot shows a rodent who quickly explored the closed arms, whilst waiting to explore the open arms til later in the trial. This indicates a high anxiety state.**
+
 # Optional: Process multiple files
-## Step 1: Multiple Files Processing
+## Multiple Files Processing
 
 If you need to process multiple files, you can use this approach:
 
-```{r process_multiple_files, eval=FALSE}
+```{r process_multiple_files}
 # User-configurable parameters
 file_pattern <- "^NEG_Test.*\\.xlsx$"  # Adjust this pattern to match your files
-data_folder <- "Raw/Trial"             # Folder containing your data files
 
-# Process multiple files with user-defined pattern
-data_path <- paste0(getwd(), "/", data_folder)
+# Determine data folder path based on working directory
+if (file.exists("test_data")) {
+  data_path <- "test_data"
+} else if (file.exists("../test_data")) {
+  data_path <- "../test_data"
+} else {
+  stop("Cannot find test_data directory.")
+}
 
 # Process files with the specified pattern
 all_exploration_data <- process_multiple_files(data_path, file_pattern)
@@ -172,7 +206,7 @@ all_exploration_data <- process_multiple_files(data_path, file_pattern)
 
 If you have multiple trials with different conditions, you can create summary visualizations:
 
-```{r summarize_exploration, eval=FALSE}
+```{r summarize_exploration}
 # Create summary data
 exploration_summary <- all_exploration_data %>%
   group_by(Diet, Strain, grid_type, Time) %>%
@@ -181,7 +215,9 @@ exploration_summary <- all_exploration_data %>%
     sd_exploration_percentage = sd(exploration_percentage),
     .groups = 'drop'
   )
+```
 
+```{r plot_summary}
 # Plot summary
 ggplot(exploration_summary %>% filter(grid_type != "total")) +
   geom_line(aes(x = Time, y = mean_exploration_percentage, 
@@ -199,3 +235,5 @@ ggplot(exploration_summary %>% filter(grid_type != "total")) +
   facet_grid(Diet ~ Strain) +
   theme_minimal()
 ```
+
+**This plot shows that the Control group explores the closed arms rapidly and completely, and the open arms to a lesser extent and only after a long delay. Conversely, the Experimental group explores in an arm agnostic manner, indicating lower anxiety.**
