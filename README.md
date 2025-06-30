@@ -59,34 +59,11 @@ Users will first process raw trial data, including shifting coordinates to ensur
 
 For a more detailed workflow, see the publication below. 
 
-## Quick Start
+## Running the test analysis
 
-1. Clone the repository
-2. Install required R packages (see analysis files for dependencies)
-3. Use the test data in `test_data/` to run the analysis workflows
-4. Start with `analysis/NEG_Calc.qmd` for basic preprocessing and NEG calculation
-
-### Running the Analysis
-
-**Option 1: From Repository Root (Recommended)**
-```r
-# Set working directory to repository root
-setwd("/path/to/NEG_Overview")
-
-# Render analysis files
-rmarkdown::render("analysis/NEG_Calc.qmd")
-rmarkdown::render("analysis/MCP_Comp.qmd")
-rmarkdown::render("analysis/GAM_Reg.qmd")
-```
-
-**Option 2: From Analysis Directory**
-```r
-# Navigate to analysis directory
-setwd("/path/to/NEG_Overview/analysis")
-
-# The .qmd files will automatically detect the correct paths
-rmarkdown::render("NEG_Calc.qmd")
-```
+Each quarto document contains test data that can be processed in a chunk-by-chunk fashion or rendered as a HTML document (see NEG_Calc.html as an example).
+- NEG_Calc.qmd uses test data stored in excel spreadsheets similar to ones generated from the Ethovision software
+- MCP_Comp.qmd and GAM_Reg.qmd both use simulated data that mimics what is processed in NEG_Calc.qmd
 
 ## Citation
 
