@@ -37,7 +37,7 @@ Once we have the NEG time series, we can use the differences between arm types t
 - **R/**: Preprocessing functions and utilities
   - `preprocess.R`: Core preprocessing functions including coordinate alignment correction
 - **test_data/**: Example datasets for testing and validation
-- **visualisations/**: Interactive web-based visualization demonstrating mouse behavior patterns
+- **visualisations/**: Interactive web-based visualization demonstrating rodent behavior patterns
 - **Images/**: Figures and visualization assets
 
 ### Legacy Versions
