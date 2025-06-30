@@ -98,7 +98,9 @@ trials_data_unnested <- unnest_trials(trials_data)
 
 The preprocessing includes center shift correction to normalize coordinates around (0,0). We can visualize this to verify the correction:
 
-```{r visualize_trajectory, eval=FALSE}
+```{r visualize_trajectory}
+#| warning: false
+#| message: false
 # Plot original vs shifted coordinates
 ggplot(trials_data_unnested) +
   # Original coordinates
@@ -110,19 +112,26 @@ ggplot(trials_data_unnested) +
   coord_fixed() +
   theme_minimal() +
   labs(title = "Original vs. Corrected Trajectory",
-       subtitle = "Grey = Original, Blue = Corrected")
+       subtitle = "Grey = Original, Blue = Corrected, Red = Origin")
 ```
 
 ## Step 4: Create Grid for Exploration Analysis
 
 We need to create a grid of discrete areas to track where the animal has explored:
 
+::: {.callout-warning}
+## Warning
+Creating a grid using only one sample will result in a grid that only covers the area of the sample. This will result in a grid that is not representative of the entire maze.
+:::
+
 ```{r create_grid}
 # Unnest data and create grid
 arm_grids <- create_complete_arm_grids(trials_data_unnested)
 ```
 
-## Step 5: Visualize the Grid (Optional)
+## Step 5: Visualize the Grid
+
+The grid is created by creating a grid for each arm type, and then combining them into a single grid. As noted, this is not ideal as we are only using one sample to create the grid.
 
 ```{r visualize_grid}
 # Plot the created grid bands for each arm type
@@ -165,6 +174,8 @@ trials_with_exploration <- trials_data %>%
 
 ## Step 7: Visualize Novel Exploration Growth
 
+This plot shows a rodent who quickly explored the closed arms, whilst waiting to explore the open arms til later in the trial. This indicates a high anxiety state.
+
 ```{r plot_exploration}
 # Plot exploration percentage over time by arm type
 ggplot(trials_with_exploration$exploration_data[[1]], 
@@ -178,12 +189,19 @@ ggplot(trials_with_exploration$exploration_data[[1]],
   ylim(0, 100)
 ```
 
-**This plot shows a rodent who quickly explored the closed arms, whilst waiting to explore the open arms til later in the trial. This indicates a high anxiety state.**
 
-# Optional: Process multiple files
-## Multiple Files Processing
 
-If you need to process multiple files, you can use this approach:
+# Process Multiple Files
+## Multiple File Processing
+
+For processing multiple files, the updated approach uses a **combined grid strategy** to ensure consistent grid boundaries across all trials:
+
+**Combined Grid Approach Benefits:**
+
+1. **Consistent Comparisons**: All trials use identical grid boundaries
+2. **Fair Percentages**: Same number of grid squares across trials  
+3. **Robust Statistics**: Valid statistical comparisons between trials
+4. **Recentered Coordinates**: Grid based on all recentered data combined
 
 ```{r process_multiple_files}
 # User-configurable parameters
@@ -198,11 +216,20 @@ if (file.exists("test_data")) {
   stop("Cannot find test_data directory.")
 }
 
-# Process files with the specified pattern
+# Process files with combined grid approach
+# This ensures all trials use the same grid boundaries for fair comparison
 all_exploration_data <- process_multiple_files(data_path, file_pattern)
+
+# Check the master grid summary
+get_grid_summary(all_exploration_data)
 ```
 
-## Step 8: Summarize Exploration by Groups (Optional)
+```{r visualize_master_grid}
+# Visualize the master grid used across all trials
+plot_master_grid(all_exploration_data)
+```
+
+## Step 8: Summarize Exploration by Groups
 
 If you have multiple trials with different conditions, you can create summary visualizations:
 
@@ -217,16 +244,20 @@ exploration_summary <- all_exploration_data %>%
   )
 ```
 
+## Visualise Exploration by Group per Arm Type
+
+The plot below shows that the Control group explores the closed arms rapidly and completely, and the open arms to a lesser extent and only after a long delay. Conversely, the Experimental group explores in an arm agnostic manner, indicating lower anxiety.**
+
 ```{r plot_summary}
 # Plot summary
 ggplot(exploration_summary %>% filter(grid_type != "total")) +
   geom_line(aes(x = Time, y = mean_exploration_percentage, 
                 color = grid_type, 
-                group = interaction(Diet, Strain, grid_type))) +
+                group = interaction(Diet, Strain, grid_type)), linewidth = 1) +
   geom_ribbon(aes(x = Time, 
                  ymin = mean_exploration_percentage - sd_exploration_percentage, 
                  ymax = mean_exploration_percentage + sd_exploration_percentage, 
-                 fill = grid_type), alpha = 0.2) +
+                 fill = grid_type), linetype = "dashed", linewidth = 0.5, alpha = 0.2) +
   scale_color_discrete(name = "Arm Type") +
   scale_fill_discrete(name = "Arm Type") +
   labs(title = "Novel Exploration Growth by Group",
@@ -236,4 +267,18 @@ ggplot(exploration_summary %>% filter(grid_type != "total")) +
   theme_minimal()
 ```
 
-**This plot shows that the Control group explores the closed arms rapidly and completely, and the open arms to a lesser extent and only after a long delay. Conversely, the Experimental group explores in an arm agnostic manner, indicating lower anxiety.**
+## Visualise Exploration by Group per Arm Type for each rodent
+
+```{r plot traces}
+# Plot traces for each group
+ggplot(all_exploration_data %>% filter(grid_type != "total")) +
+  geom_line(aes(x = Time, y = exploration_percentage, 
+                color = grid_type, 
+                group = interaction(RatID, grid_type))) +
+  scale_color_discrete(name = "Arm Type") +
+  labs(title = "NEG Traces by Group",
+       x = "Time (s)",
+       y = "NEG (%)") +
+  facet_grid(Diet ~ RatID) +
+  theme_minimal()
+```

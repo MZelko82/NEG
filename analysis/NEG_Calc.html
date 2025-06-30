@@ -90,14 +90,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#step-2-unnest-data-for-analysis" id="toc-step-2-unnest-data-for-analysis" class="nav-link" data-scroll-target="#step-2-unnest-data-for-analysis"><span class="header-section-number">2.1</span> Step 2: Unnest Data for Analysis</a></li>
   <li><a href="#step-3-visualize-raw-and-corrected-trajectories-optional" id="toc-step-3-visualize-raw-and-corrected-trajectories-optional" class="nav-link" data-scroll-target="#step-3-visualize-raw-and-corrected-trajectories-optional"><span class="header-section-number">2.2</span> Step 3: Visualize Raw and Corrected Trajectories (Optional)</a></li>
   <li><a href="#step-4-create-grid-for-exploration-analysis" id="toc-step-4-create-grid-for-exploration-analysis" class="nav-link" data-scroll-target="#step-4-create-grid-for-exploration-analysis"><span class="header-section-number">2.3</span> Step 4: Create Grid for Exploration Analysis</a></li>
-  <li><a href="#step-5-visualize-the-grid-optional" id="toc-step-5-visualize-the-grid-optional" class="nav-link" data-scroll-target="#step-5-visualize-the-grid-optional"><span class="header-section-number">2.4</span> Step 5: Visualize the Grid (Optional)</a></li>
+  <li><a href="#step-5-visualize-the-grid" id="toc-step-5-visualize-the-grid" class="nav-link" data-scroll-target="#step-5-visualize-the-grid"><span class="header-section-number">2.4</span> Step 5: Visualize the Grid</a></li>
   <li><a href="#step-6-calculate-novel-exploration-growth" id="toc-step-6-calculate-novel-exploration-growth" class="nav-link" data-scroll-target="#step-6-calculate-novel-exploration-growth"><span class="header-section-number">2.5</span> Step 6: Calculate Novel Exploration Growth</a></li>
   <li><a href="#step-7-visualize-novel-exploration-growth" id="toc-step-7-visualize-novel-exploration-growth" class="nav-link" data-scroll-target="#step-7-visualize-novel-exploration-growth"><span class="header-section-number">2.6</span> Step 7: Visualize Novel Exploration Growth</a></li>
   </ul></li>
-  <li><a href="#optional-process-multiple-files" id="toc-optional-process-multiple-files" class="nav-link" data-scroll-target="#optional-process-multiple-files"><span class="header-section-number">3</span> Optional: Process multiple files</a>
+  <li><a href="#process-multiple-files" id="toc-process-multiple-files" class="nav-link" data-scroll-target="#process-multiple-files"><span class="header-section-number">3</span> Process Multiple Files</a>
   <ul class="collapse">
-  <li><a href="#multiple-files-processing" id="toc-multiple-files-processing" class="nav-link" data-scroll-target="#multiple-files-processing"><span class="header-section-number">3.1</span> Multiple Files Processing</a></li>
-  <li><a href="#step-8-summarize-exploration-by-groups-optional" id="toc-step-8-summarize-exploration-by-groups-optional" class="nav-link" data-scroll-target="#step-8-summarize-exploration-by-groups-optional"><span class="header-section-number">3.2</span> Step 8: Summarize Exploration by Groups (Optional)</a></li>
+  <li><a href="#multiple-file-processing" id="toc-multiple-file-processing" class="nav-link" data-scroll-target="#multiple-file-processing"><span class="header-section-number">3.1</span> Multiple File Processing</a></li>
+  <li><a href="#step-8-summarize-exploration-by-groups" id="toc-step-8-summarize-exploration-by-groups" class="nav-link" data-scroll-target="#step-8-summarize-exploration-by-groups"><span class="header-section-number">3.2</span> Step 8: Summarize Exploration by Groups</a></li>
+  <li><a href="#visualise-exploration-by-group-per-arm-type" id="toc-visualise-exploration-by-group-per-arm-type" class="nav-link" data-scroll-target="#visualise-exploration-by-group-per-arm-type"><span class="header-section-number">3.3</span> Visualise Exploration by Group per Arm Type</a></li>
+  <li><a href="#visualise-exploration-by-group-per-arm-type-for-each-rodent" id="toc-visualise-exploration-by-group-per-arm-type-for-each-rodent" class="nav-link" data-scroll-target="#visualise-exploration-by-group-per-arm-type-for-each-rodent"><span class="header-section-number">3.4</span> Visualise Exploration by Group per Arm Type for each rodent</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -270,13 +272,33 @@ $ velocity &lt;dbl&gt; NA, 13.78838, 14.50355, 15.17201, 15.77452, 16.31815, 16.
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>() <span class="sc">+</span></span>
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Original vs. Corrected Trajectory"</span>,</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Grey = Original, Blue = Corrected"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Grey = Original, Blue = Corrected, Red = Origin"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="NEG_Calc_files/figure-html/visualize_trajectory-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
 </div>
 </section>
 <section id="step-4-create-grid-for-exploration-analysis" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="step-4-create-grid-for-exploration-analysis"><span class="header-section-number">2.3</span> Step 4: Create Grid for Exploration Analysis</h2>
 <p>We need to create a grid of discrete areas to track where the animal has explored:</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Creating a grid using only one sample will result in a grid that only covers the area of the sample. This will result in a grid that is not representative of the entire maze.</p>
+</div>
+</div>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -285,8 +307,9 @@ $ velocity &lt;dbl&gt; NA, 13.78838, 14.50355, 15.17201, 15.77452, 16.31815, 16.
 </details>
 </div>
 </section>
-<section id="step-5-visualize-the-grid-optional" class="level2" data-number="2.4">
-<h2 data-number="2.4" class="anchored" data-anchor-id="step-5-visualize-the-grid-optional"><span class="header-section-number">2.4</span> Step 5: Visualize the Grid (Optional)</h2>
+<section id="step-5-visualize-the-grid" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="step-5-visualize-the-grid"><span class="header-section-number">2.4</span> Step 5: Visualize the Grid</h2>
+<p>The grid is created by creating a grid for each arm type, and then combining them into a single grid. As noted, this is not ideal as we are only using one sample to create the grid.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -341,6 +364,7 @@ $ velocity &lt;dbl&gt; NA, 13.78838, 14.50355, 15.17201, 15.77452, 16.31815, 16.
 </section>
 <section id="step-7-visualize-novel-exploration-growth" class="level2" data-number="2.6">
 <h2 data-number="2.6" class="anchored" data-anchor-id="step-7-visualize-novel-exploration-growth"><span class="header-section-number">2.6</span> Step 7: Visualize Novel Exploration Growth</h2>
+<p>This plot shows a rodent who quickly explored the closed arms, whilst waiting to explore the open arms til later in the trial. This indicates a high anxiety state.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -363,14 +387,21 @@ $ velocity &lt;dbl&gt; NA, 13.78838, 14.50355, 15.17201, 15.77452, 16.31815, 16.
 </div>
 </div>
 </div>
-<p><strong>This plot shows a rodent who quickly explored the closed arms, whilst waiting to explore the open arms til later in the trial. This indicates a high anxiety state.</strong></p>
 </section>
 </section>
-<section id="optional-process-multiple-files" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Optional: Process multiple files</h1>
-<section id="multiple-files-processing" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="multiple-files-processing"><span class="header-section-number">3.1</span> Multiple Files Processing</h2>
-<p>If you need to process multiple files, you can use this approach:</p>
+<section id="process-multiple-files" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Process Multiple Files</h1>
+<section id="multiple-file-processing" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="multiple-file-processing"><span class="header-section-number">3.1</span> Multiple File Processing</h2>
+<p>For processing multiple files, the updated approach uses a <strong>combined grid strategy</strong> to ensure consistent grid boundaries across all trials:</p>
+<p><strong>Combined Grid Approach Benefits:</strong></p>
+<ol type="1">
+<li><strong>Consistent Comparisons</strong>: All trials use identical grid boundaries</li>
+<li><strong>Fair Percentages</strong>: Same number of grid squares across trials<br>
+</li>
+<li><strong>Robust Statistics</strong>: Valid statistical comparisons between trials</li>
+<li><strong>Recentered Coordinates</strong>: Grid based on all recentered data combined</li>
+</ol>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -386,12 +417,15 @@ $ velocity &lt;dbl&gt; NA, 13.78838, 14.50355, 15.17201, 15.77452, 16.31815, 16.
 <span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Cannot find test_data directory."</span>)</span>
 <span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Process files with the specified pattern</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>all_exploration_data <span class="ot">&lt;-</span> <span class="fu">process_multiple_files</span>(data_path, file_pattern)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Process files with combined grid approach</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># This ensures all trials use the same grid boundaries for fair comparison</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>all_exploration_data <span class="ot">&lt;-</span> <span class="fu">process_multiple_files</span>(data_path, file_pattern)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Found 4 files matching pattern: ^NEG_Test.*\.xlsx$ 
-Processing file 1 of 4 : NEG_Test_1.xlsx 
+
+=== PHASE 1: Loading and preprocessing all files ===
+Loading file 1 of 4 : NEG_Test_1.xlsx 
 
 Processing file: NEG_Test_1.xlsx 
 Reading metadata...</code></pre>
@@ -402,7 +436,7 @@ Reading metadata...</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading time series data...
-Processing file 2 of 4 : NEG_Test_2.xlsx 
+Loading file 2 of 4 : NEG_Test_2.xlsx 
 
 Processing file: NEG_Test_2.xlsx 
 Reading metadata...</code></pre>
@@ -413,7 +447,7 @@ Reading metadata...</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading time series data...
-Processing file 3 of 4 : NEG_Test_3.xlsx 
+Loading file 3 of 4 : NEG_Test_3.xlsx 
 
 Processing file: NEG_Test_3.xlsx 
 Reading metadata...</code></pre>
@@ -424,7 +458,7 @@ Reading metadata...</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading time series data...
-Processing file 4 of 4 : NEG_Test_4.xlsx 
+Loading file 4 of 4 : NEG_Test_4.xlsx 
 
 Processing file: NEG_Test_4.xlsx 
 Reading metadata...</code></pre>
@@ -434,45 +468,97 @@ Reading metadata...</code></pre>
 • `` -&gt; `...1`</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Reading time series data...</code></pre>
+<pre><code>Reading time series data...
+
+=== PHASE 2: Creating combined grid from all recentered data ===
+Combined data from 4 trials
+Total data points: 30004 
+Coordinate ranges - X: -54.27 to 53.92 
+Coordinate ranges - Y: -46.65 to 47.04 
+
+Master grid created:
+- closed arms: 44 bands
+- open arms: 40 bands
+- total arms: 84 bands
+
+=== PHASE 3: Calculating exploration using master grid ===
+Calculating exploration for trial 1 : 1 
+Calculating exploration for trial 2 : 2 
+Calculating exploration for trial 3 : 3 
+Calculating exploration for trial 4 : 4 
+
+=== PHASE 4: Combining results ===
+Successfully processed 4 trials
+Final dataset contains 90012 rows</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the master grid summary</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">get_grid_summary</span>(all_exploration_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 2
+  grid_type n_bands
+  &lt;chr&gt;       &lt;int&gt;
+1 closed         44
+2 open           40
+3 total          84</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize the master grid used across all trials</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_master_grid</span>(all_exploration_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="NEG_Calc_files/figure-html/visualize_master_grid-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
-<section id="step-8-summarize-exploration-by-groups-optional" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="step-8-summarize-exploration-by-groups-optional"><span class="header-section-number">3.2</span> Step 8: Summarize Exploration by Groups (Optional)</h2>
+<section id="step-8-summarize-exploration-by-groups" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="step-8-summarize-exploration-by-groups"><span class="header-section-number">3.2</span> Step 8: Summarize Exploration by Groups</h2>
 <p>If you have multiple trials with different conditions, you can create summary visualizations:</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create summary data</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>exploration_summary <span class="ot">&lt;-</span> all_exploration_data <span class="sc">%&gt;%</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Diet, Strain, grid_type, Time) <span class="sc">%&gt;%</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_exploration_percentage =</span> <span class="fu">mean</span>(exploration_percentage), </span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_exploration_percentage =</span> <span class="fu">sd</span>(exploration_percentage),</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create summary data</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>exploration_summary <span class="ot">&lt;-</span> all_exploration_data <span class="sc">%&gt;%</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Diet, Strain, grid_type, Time) <span class="sc">%&gt;%</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_exploration_percentage =</span> <span class="fu">mean</span>(exploration_percentage), </span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_exploration_percentage =</span> <span class="fu">sd</span>(exploration_percentage),</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+</section>
+<section id="visualise-exploration-by-group-per-arm-type" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="visualise-exploration-by-group-per-arm-type"><span class="header-section-number">3.3</span> Visualise Exploration by Group per Arm Type</h2>
+<p>The plot below shows that the Control group explores the closed arms rapidly and completely, and the open arms to a lesser extent and only after a long delay. Conversely, the Experimental group explores in an arm agnostic manner, indicating lower anxiety.**</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot summary</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(exploration_summary <span class="sc">%&gt;%</span> <span class="fu">filter</span>(grid_type <span class="sc">!=</span> <span class="st">"total"</span>)) <span class="sc">+</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> Time, <span class="at">y =</span> mean_exploration_percentage, </span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">color =</span> grid_type, </span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">group =</span> <span class="fu">interaction</span>(Diet, Strain, grid_type))) <span class="sc">+</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">x =</span> Time, </span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">ymin =</span> mean_exploration_percentage <span class="sc">-</span> sd_exploration_percentage, </span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">ymax =</span> mean_exploration_percentage <span class="sc">+</span> sd_exploration_percentage, </span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">fill =</span> grid_type), <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_discrete</span>(<span class="at">name =</span> <span class="st">"Arm Type"</span>) <span class="sc">+</span></span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_discrete</span>(<span class="at">name =</span> <span class="st">"Arm Type"</span>) <span class="sc">+</span></span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Novel Exploration Growth by Group"</span>,</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (s)"</span>,</span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"NEG (%)"</span>) <span class="sc">+</span></span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Diet <span class="sc">~</span> Strain) <span class="sc">+</span></span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot summary</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(exploration_summary <span class="sc">%&gt;%</span> <span class="fu">filter</span>(grid_type <span class="sc">!=</span> <span class="st">"total"</span>)) <span class="sc">+</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> Time, <span class="at">y =</span> mean_exploration_percentage, </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">color =</span> grid_type, </span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">group =</span> <span class="fu">interaction</span>(Diet, Strain, grid_type)), <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">x =</span> Time, </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">ymin =</span> mean_exploration_percentage <span class="sc">-</span> sd_exploration_percentage, </span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">ymax =</span> mean_exploration_percentage <span class="sc">+</span> sd_exploration_percentage, </span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">fill =</span> grid_type), <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_discrete</span>(<span class="at">name =</span> <span class="st">"Arm Type"</span>) <span class="sc">+</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_discrete</span>(<span class="at">name =</span> <span class="st">"Arm Type"</span>) <span class="sc">+</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Novel Exploration Growth by Group"</span>,</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (s)"</span>,</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"NEG (%)"</span>) <span class="sc">+</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Diet <span class="sc">~</span> Strain) <span class="sc">+</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -482,7 +568,32 @@ Reading metadata...</code></pre>
 </div>
 </div>
 </div>
-<p><strong>This plot shows that the Control group explores the closed arms rapidly and completely, and the open arms to a lesser extent and only after a long delay. Conversely, the Experimental group explores in an arm agnostic manner, indicating lower anxiety.</strong></p>
+</section>
+<section id="visualise-exploration-by-group-per-arm-type-for-each-rodent" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="visualise-exploration-by-group-per-arm-type-for-each-rodent"><span class="header-section-number">3.4</span> Visualise Exploration by Group per Arm Type for each rodent</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot traces for each group</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(all_exploration_data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(grid_type <span class="sc">!=</span> <span class="st">"total"</span>)) <span class="sc">+</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> Time, <span class="at">y =</span> exploration_percentage, </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">color =</span> grid_type, </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">group =</span> <span class="fu">interaction</span>(RatID, grid_type))) <span class="sc">+</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_discrete</span>(<span class="at">name =</span> <span class="st">"Arm Type"</span>) <span class="sc">+</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"NEG Traces by Group"</span>,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (s)"</span>,</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"NEG (%)"</span>) <span class="sc">+</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Diet <span class="sc">~</span> RatID) <span class="sc">+</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="NEG_Calc_files/figure-html/plot%20traces-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 </section>
 

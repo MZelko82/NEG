@@ -505,7 +505,11 @@ calculate_grid_exploration <- function(trial_data, grid_data) {
   return(results)
 }
 
-#' Process multiple files with customizable pattern
+#' Process multiple files with combined grid approach
+#' @param data_path Path to directory containing data files
+#' @param file_pattern Regex pattern to match files
+#' @param max_files Optional limit on number of files to process
+#' @return Combined exploration data with consistent grid across all trials
 process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx$", max_files = NULL) {
   # List all trial files matching the pattern
   trial_files <- list.files(data_path, 
@@ -517,42 +521,105 @@ process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx
   # Optionally limit number of files for testing
   if (!is.null(max_files)) {
     trial_files <- trial_files[1:min(length(trial_files), max_files)]
+    cat("Processing", length(trial_files), "files (limited by max_files)\n")
   }
   
-  # Create empty list to store results
-  all_exploration_results <- list()
+  cat("\n=== PHASE 1: Loading and preprocessing all files ===\n")
   
-  # Process one file at a time
+  # First pass: Load all data to create combined grid
+  all_trial_data <- list()
+  all_unnested_data <- list()
+  
   for (i in seq_along(trial_files)) {
     f <- trial_files[i]
-    cat("Processing file", i, "of", length(trial_files), ":", basename(f), "\n")
+    cat("Loading file", i, "of", length(trial_files), ":", basename(f), "\n")
     
     tryCatch({
       # Read and preprocess single file
       trial_data <- read_and_clean_data(f)
       
-      # Extract metadata for final results
+      # Store the nested data
+      all_trial_data[[i]] <- trial_data
+      
+      # Unnest data for grid calculation
+      trial_unnested <- trial_data %>%
+        unnest(data) %>%
+        mutate(
+          trial_index = i,
+          filename = basename(f)
+        )
+      
+      all_unnested_data[[i]] <- trial_unnested
+      
+    }, error = function(e) {
+      cat("ERROR loading file", basename(f), ":", e$message, "\n")
+      all_trial_data[[i]] <<- NULL
+      all_unnested_data[[i]] <<- NULL
+    })
+  }
+  
+  # Remove NULL entries (failed files)
+  all_trial_data <- all_trial_data[!sapply(all_trial_data, is.null)]
+  all_unnested_data <- all_unnested_data[!sapply(all_unnested_data, is.null)]
+  
+  if (length(all_unnested_data) == 0) {
+    stop("No files were successfully loaded")
+  }
+  
+  cat("\n=== PHASE 2: Creating combined grid from all recentered data ===\n")
+  
+  # Combine all unnested data
+  combined_data <- bind_rows(all_unnested_data)
+  
+  cat("Combined data from", length(all_unnested_data), "trials\n")
+  cat("Total data points:", nrow(combined_data), "\n")
+  cat("Coordinate ranges - X:", round(min(combined_data$x_m, na.rm = TRUE), 2), "to", 
+      round(max(combined_data$x_m, na.rm = TRUE), 2), "\n")
+  cat("Coordinate ranges - Y:", round(min(combined_data$y_m, na.rm = TRUE), 2), "to", 
+      round(max(combined_data$y_m, na.rm = TRUE), 2), "\n")
+  
+  # Create master grid from combined data
+  master_grid <- create_complete_arm_grids(combined_data)
+  
+  # Print grid information
+  cat("\nMaster grid created:\n")
+  grid_summary <- master_grid %>%
+    unnest(data) %>%
+    group_by(grid_type) %>%
+    summarise(
+      n_bands = n(),
+      .groups = 'drop'
+    )
+  
+  for (i in 1:nrow(grid_summary)) {
+    cat("-", grid_summary$grid_type[i], "arms:", grid_summary$n_bands[i], "bands\n")
+  }
+  
+  cat("\n=== PHASE 3: Calculating exploration using master grid ===\n")
+  
+  # Second pass: Calculate exploration using master grid
+  all_exploration_results <- list()
+  
+  for (i in seq_along(all_trial_data)) {
+    if (is.null(all_trial_data[[i]])) next
+    
+    trial_data <- all_trial_data[[i]]
+    cat("Calculating exploration for trial", i, ":", trial_data$RatID, "\n")
+    
+    tryCatch({
+      # Extract metadata
       metadata <- trial_data %>%
         select(RatID, Diet, Strain, Treatment)
       
-      # Unnest data for this file only
+      # Unnest data for this trial
       trial_unnested <- trial_data %>%
-        unnest(data)
-      
-      # Free memory
-      rm(trial_data)
-      gc()
-      
-      # Create grid for this trial
-      trial_grid <- create_complete_arm_grids(trial_unnested)
-      
-      # Calculate exploration
-      trial_unnested <- trial_unnested %>%
+        unnest(data) %>%
         mutate(x_mr = round(x_m), y_mr = round(y_m))
       
-      exploration_data <- calculate_grid_exploration(trial_unnested, trial_grid)
+      # Calculate exploration using MASTER GRID
+      exploration_data <- calculate_grid_exploration(trial_unnested, master_grid)
       
-      # Add to results
+      # Add metadata to results
       trial_id <- paste(metadata$RatID, metadata$Diet, metadata$Strain, sep="_")
       
       exploration_data <- exploration_data %>%
@@ -561,22 +628,106 @@ process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx
           Diet = metadata$Diet,
           Strain = metadata$Strain,
           Treatment = metadata$Treatment,
-          trial_id = trial_id
+          trial_id = trial_id,
+          filename = trial_data$filename
         )
       
       all_exploration_results[[i]] <- exploration_data
       
-      # Clean up large objects to free memory
-      rm(trial_unnested, trial_grid, exploration_data)
+      # Clean up
+      rm(trial_unnested, exploration_data)
       gc()
       
     }, error = function(e) {
-      cat("ERROR processing file:", e$message, "\n")
+      cat("ERROR calculating exploration for trial", i, ":", e$message, "\n")
     })
   }
   
-  # Combine all results at the end
+  cat("\n=== PHASE 4: Combining results ===\n")
+  
+  # Remove NULL entries and combine results
+  all_exploration_results <- all_exploration_results[!sapply(all_exploration_results, is.null)]
+  
+  if (length(all_exploration_results) == 0) {
+    stop("No exploration data was successfully calculated")
+  }
+  
+  # Combine all results
   all_results <- bind_rows(all_exploration_results)
   
+  cat("Successfully processed", length(all_exploration_results), "trials\n")
+  cat("Final dataset contains", nrow(all_results), "rows\n")
+  
+  # Add master grid as attribute for reference
+  attr(all_results, "master_grid") <- master_grid
+  attr(all_results, "grid_summary") <- grid_summary
+  
   return(all_results)
+}
+
+#' Extract master grid from process_multiple_files results
+#' @param exploration_results Results from process_multiple_files
+#' @return The master grid used for all trials
+get_master_grid <- function(exploration_results) {
+  master_grid <- attr(exploration_results, "master_grid")
+  if (is.null(master_grid)) {
+    stop("No master grid found. Was this data processed with the updated process_multiple_files function?")
+  }
+  return(master_grid)
+}
+
+#' Get grid summary from process_multiple_files results
+#' @param exploration_results Results from process_multiple_files
+#' @return Summary of grid structure
+get_grid_summary <- function(exploration_results) {
+  grid_summary <- attr(exploration_results, "grid_summary")
+  if (is.null(grid_summary)) {
+    stop("No grid summary found. Was this data processed with the updated process_multiple_files function?")
+  }
+  return(grid_summary)
+}
+
+#' Visualize the master grid used across all trials
+#' @param exploration_results Results from process_multiple_files
+#' @param sample_data Optional: sample data to overlay on grid
+#' @return ggplot object showing the master grid
+plot_master_grid <- function(exploration_results, sample_data = NULL) {
+  require(ggplot2)
+  
+  master_grid <- get_master_grid(exploration_results)
+  
+  # Extract grid data
+  open_bands <- master_grid %>% filter(grid_type == "open") %>% unnest(data)
+  closed_bands <- master_grid %>% filter(grid_type == "closed") %>% unnest(data)
+  
+  p <- ggplot() +
+    # Open arms (vertical bands)
+    geom_rect(data = open_bands, 
+              aes(xmin = x_min, xmax = x_max,
+                  ymin = depth_start, ymax = depth_end),
+              fill = "lightblue", color = "darkblue", alpha = 0.4) +
+    # Closed arms (horizontal bands)
+    geom_rect(data = closed_bands, 
+              aes(xmin = depth_start, xmax = depth_end,
+                  ymin = y_min, ymax = y_max),
+              fill = "lightcoral", color = "darkred", alpha = 0.4) +
+    coord_equal() +
+    theme_minimal() +
+    labs(title = "Master Grid Used Across All Trials",
+         subtitle = paste("Open arms:", nrow(open_bands), "bands | Closed arms:", nrow(closed_bands), "bands"),
+         x = "X Position (cm)",
+         y = "Y Position (cm)")
+  
+  # Optionally overlay sample data
+  if (!is.null(sample_data)) {
+    p <- p + 
+      geom_point(data = sample_data, 
+                 aes(x = x_m, y = y_m, color = factor(InOpen)), 
+                 alpha = 0.5, size = 0.3) +
+      scale_color_manual(values = c("red", "blue"), 
+                        labels = c("Closed Arm", "Open Arm"),
+                        name = "Location")
+  }
+  
+  return(p)
 }
