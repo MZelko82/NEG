@@ -43,54 +43,13 @@ The first step is to load the data files and run the preprocessing functions:
 source("R/preprocess_v1.R")
 ```
 
-# Raw Data / Experimental Data
-```{r config}
-# Dynamic configuration for data preprocessing
-metadata_range <- "B32:B35"
-metadata_fields <- c("RatID", "Diet", "Strain", "Treatment")
-header_row <- 37
-data_start_row <- 39
-required_cols <- c(
-  "Trial time",
-  "X center",
-  "Y center",
-  "In zone(centre_zone / center-point)",
-  "In zone(open_arm_1 / center-point)",
-  "In zone(open_arm_2 / center-point)",
-  "In zone(closed_arm_1 / center-point)",
-  "In zone(closed_arm_2 / center-point)"
-)
-open_arm_cols <- c("In zone(open_arm_1 / center-point)", "In zone(open_arm_2 / center-point)")
-closed_arm_cols <- c("In zone(closed_arm_1 / center-point)", "In zone(closed_arm_2 / center-point)")
-centre_col <- "In zone(centre_zone / center-point)"
-na_values <- c("", "-", "NA")
-x_col <- "X center"
-y_col <- "Y center"
-time_col <- "Trial time"
-```
-
-
 # Example usage - load a single file
 ```{r load_single_file}
 # Replace with your file path
 file_path <- paste0(getwd(), "/Raw/Trial/NEG_Test_1.xlsx")
 
 # Read and preprocess the data file
-trials_data <- read_and_clean_data(
-  file_path,
-  metadata_range = metadata_range,
-  metadata_fields = metadata_fields,
-  header_row = header_row,
-  data_start_row = data_start_row,
-  required_cols = required_cols,
-  open_arm_cols = open_arm_cols,
-  closed_arm_cols = closed_arm_cols,
-  centre_col = centre_col,
-  na_values = na_values,
-  x_col = x_col,
-  y_col = y_col,
-  time_col = time_col
-)
+trials_data <- read_and_clean_data(file_path)
 
 # Examine the structure of the preprocessed data
 glimpse(trials_data)
@@ -206,19 +165,7 @@ data_folder <- "Raw/Trial"             # Folder containing your data files
 data_path <- paste0(getwd(), "/", data_folder)
 
 # Process files with the specified pattern
-all_exploration_data <- process_multiple_files(data_path, file_pattern,
-metadata_range = metadata_range,
-  metadata_fields = metadata_fields,
-  header_row = header_row,
-  data_start_row = data_start_row,
-  required_cols = required_cols,
-  open_arm_cols = open_arm_cols,
-  closed_arm_cols = closed_arm_cols,
-  centre_col = centre_col,
-  na_values = na_values,
-  x_col = x_col,
-  y_col = y_col,
-  time_col = time_col)
+all_exploration_data <- process_multiple_files(data_path, file_pattern)
 ```
 
 ## Step 8: Summarize Exploration by Groups (Optional)
