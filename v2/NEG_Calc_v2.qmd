@@ -40,7 +40,7 @@ The first step is to load the data files and run the preprocessing functions:
 
 ```{r load_preprocess}
 # Load preprocessing functions
-source("R/preprocess_v1.R")
+source("v2/R/preprocess_v1.R")
 ```
 
 # Example usage - load a single file
