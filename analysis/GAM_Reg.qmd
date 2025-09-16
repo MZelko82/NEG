@@ -105,10 +105,15 @@ pp_check(fit.GAM)
 ## Note: Switch to this section if you prefer classical inference or need faster computation
 
 ```{r}
-# Fit GAM using mgcv
-fit.gam.freq <- gam(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + s(n, bs = "re"), 
+# Fit GAM using mgcv and time
+fit.gam.freq <- gam(Expl_C ~ 0 + Pheno + s(Time, by = Pheno, k = 30) + s(n, bs = "re"), 
                     data = Raw, 
                     method = "REML")  # REML is generally preferred for smoothing parameter selection
+
+# Fit GAM using mgcv and centered time
+# fit.gam.freq <- gam(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + s(n, bs = "re"), 
+#                     data = Raw, 
+#                     method = "REML")  # REML is generally preferred for smoothing parameter selection
 
 # Model summary
 summary(fit.gam.freq)
@@ -137,10 +142,13 @@ appraise(fit.gam.freq)
 
 ```{r}
 # AIC/BIC comparison (Frequentist alternative to LOO)
-# Example with a simpler model
-fit.gam.freq.simple <- gam(Expl_C ~ Pheno + s(Time_C, k = 30) + s(n, bs = "re"), 
+# Example with a simpler model with time
+fit.gam.freq.simple <- gam(Expl_C ~ Pheno + s(Time, k = 30) + s(n, bs = "re"), 
                           data = Raw, 
                           method = "REML")
+
+# Example with a simpler model with centered time
+#fit.gam.freq.simple <- gam(Expl_C ~ Pheno + s(Time_C, k = 30) + s(n, bs = "re"), 
 
 AIC(fit.gam.freq, fit.gam.freq.simple)
 BIC(fit.gam.freq, fit.gam.freq.simple)
