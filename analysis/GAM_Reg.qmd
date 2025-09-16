@@ -68,15 +68,26 @@ ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
 ```
 
 ## Centre continuous predictors where necessary
+```{r}
+# Raw <- Raw %>%
+#   mutate(Time_C = Time - mean(Time))
+```
 
 # Bayesian GAM Regression for Total Maze Exploration
-
 ```{r}
-fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
+# Raw Time Version
+fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time, by = Pheno, k = 30) + (1|n)), 
              data = Raw,
             control = list(adapt_delta = 0.95, max_treedepth = 13),
             prior = c(prior(normal(0, 1), class = "b")),
              iter = 5000, warmup = 1000, cores = 3, chains = 3)
+
+# Centered Time Version
+# fit.GAM <- brm(bf(Expl_C ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
+#              data = Raw,
+#             control = list(adapt_delta = 0.95, max_treedepth = 13),
+#             prior = c(prior(normal(0, 1), class = "b")),
+#              iter = 5000, warmup = 1000, cores = 3, chains = 3)
 ```
 
 ## Bayesian Model Summary and Diagnostics
