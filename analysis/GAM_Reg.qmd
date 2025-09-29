@@ -3,7 +3,7 @@ title: "GAM_Reg"
 format: html
 ---
 
-# Generalized Additive Model Regression (Bayesian & Frequentist)
+# Generalised Additive Model Regression (Bayesian & Frequentist)
 
 # Author: Matt Zelko (Frequentist additions by Claude)
 
