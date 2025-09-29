@@ -23,6 +23,11 @@ library(brms)      # For Bayesian GAMs
 library(loo)       # For Bayesian model comparison
 library(mgcv)      # For Frequentist GAMs
 library(gratia)    # For Frequentist GAM visualization
+library(tidybayes)
+library(HDInterval) # For HDI calculations
+library(httpgd)
+library(data.table)
+hgd()
 ```
 
 # Simulate Data
@@ -38,7 +43,6 @@ sw_dbl_log <- function(a, b, c, d, Time){
 ```
 
 ## Total Exploration by Phenotype
-
 ```{r}
 nn = 10
 Raw<- tibble(n = 1:(nn*3),
@@ -58,7 +62,6 @@ Raw<- tibble(n = 1:(nn*3),
 ```
 
 ### Plot Total Exploration by Phenotype
-
 ```{r}
 ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
   geom_line(linewidth =1)+ylim(0,100)+
@@ -73,36 +76,285 @@ ggplot(Raw, aes(Time, Expl, group = n, color = Pheno))+
 #   mutate(Time_C = Time - mean(Time))
 ```
 
+## Downsample to 100 time points for faster fitting (Optional)
+```{r}
+# Sampel by n every 10 time points
+Raw2 <- Raw %>%
+  group_by(n, Pheno) %>%
+  sample_n(100) %>%
+  ungroup()
+
+# Make Pheno a factor
+Raw2$Pheno <- factor(Raw2$Pheno)
+# Add trials = 100 to the data
+Raw2$trials <- 100
+Raw2$Expl <- round(Raw2$Expl, 0)
+```
+
+## Replot downsampled data
+```{r}
+ggplot(Raw2, aes(Time, Expl, group = n, color = Pheno))+4
+  scale_color_manual(values = c("#9c1f1f", "#8389a8", "#0e3063"))+ 
+  xlab("Time (s)") + ylab("Maze Explored (%)")+
+  theme_classic()
+```
+
 # Bayesian GAM Regression for Total Maze Exploration
 ```{r}
-# Raw Time Version
-fit.GAM <- brm(bf(Expl ~ 0 + Pheno + s(Time, by = Pheno, k = 30) + (1|n)), 
-             data = Raw,
-            control = list(adapt_delta = 0.95, max_treedepth = 13),
-            prior = c(prior(normal(0, 1), class = "b")),
-             iter = 5000, warmup = 1000, cores = 3, chains = 3)
+# Raw Time Version - Original model
+fit.GAM <- brm(bf(Expl | trials(trials) ~ 0 + Pheno + s(Time, by = Pheno, bs = "fs", k = 100)),
+  data = Raw2,
+  family = binomial(),
+  prior = c(
+    prior(normal(0, 2.5), class = "b"),
+    prior(exponential(1), class = "sds")
+  ),
+  chains = 3, cores = 3, iter = 4000, warmup = 1000,
+  control = list(adapt_delta = 0.95, max_treedepth = 13)
+)
 
+```
+
+::: {.callout-note}
+
+#  The downsampled data takes ~ 1 hour to fit on a 5.2 GHz 9800X3D processor with 64GB of RAM
+# If fitting raw data, adjust expectations for fitting time accordingly
+
+:::
+
+### Centered Time Version (Optional)
+```{r centered_time}
 # Centered Time Version
-# fit.GAM <- brm(bf(Expl ~ 0 + Pheno + s(Time_C, by = Pheno, k = 30) + (1|n)), 
+# fit.GAM <- brm(bf(Expl ~ 0 + Pheno + s(Time_C, by = Pheno, bs = "fs", k = 100)), 
 #              data = Raw,
 #             control = list(adapt_delta = 0.95, max_treedepth = 13),
 #             prior = c(prior(normal(0, 1), class = "b")),
 #              iter = 5000, warmup = 1000, cores = 3, chains = 3)
+# !Important:The remaining code needs to be updated to use Time_C instead of Time if using centered time
 ```
 
 ## Bayesian Model Summary and Diagnostics
-
 ```{r}
 summary(fit.GAM)
 plot(fit.GAM)
-conditional_smooths(fit.GAM)
+conditional_smooths(fit.GAM) # This only visualises the smooths, not the overall model
+conditional_effects(fit.GAM) # This visualises the overall model
 loo(fit.GAM)
 pp_check(fit.GAM)
+
+```
+
+# Return draws for each Phenotype
+```{r return_draws}
+# Build newdata frame with all time points for each Phenotype
+newdata <- expand_grid(
+  Pheno = factor(levels(Raw2$Pheno), levels = levels(Raw2$Pheno)),
+  Time  = seq(0, 300, by = 1),
+  trials = 100
+)
+
+draws_long <- add_epred_draws(
+  object = fit.GAM,
+  newdata = newdata,
+  re_formula = NA,     # population-level prediction
+  ndraws = 2000        # optional: limit draws for speed/reproducibility
+) %>%
+  select(.draw, Pheno, Time, .epred)
+
+draws_summ <- draws_long %>%
+  group_by(Pheno, Time) %>%
+  summarise(y = mean(.epred),
+            ymin = quantile(.epred, 0.05),
+            ymax = quantile(.epred, 0.95),
+            .groups = "drop")
+
+# Plot the fitted draws for each Phenotype
+ggplot(draws_summ, aes(x = Time, y = y, colour = Pheno, fill = Pheno)) +
+  geom_ribbon(aes(ymin = ymin, ymax = ymax), alpha = 0.2, colour = NA) +
+  geom_line(linewidth = 0.8) +
+  labs(x = "Time", y = "Expl (predicted)", colour = "Phenotype", fill = "Phenotype") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom")
+
+```
+
+## ROPE Comparisons
+```{r rope_comparisons}
+
+rope_bound <- 18
+
+compute_rope_contrasts_smooth <- function(brm_model, data, rope_bound) {
+
+ rope_lower <- -1 * rope_bound
+  rope_upper <- rope_bound
+  
+  # Build newdata frame with all time points for each Phenotype
+    newdata <- expand_grid(
+      Pheno = factor(levels(data$Pheno), levels = levels(data$Pheno)),
+      Time  = seq(0, 300, by = 1),
+      trials = 100
+    )
+  
+  draws_long <- add_epred_draws(
+  object = brm_model,
+  newdata = newdata,
+  re_formula = NA,     # population-level prediction
+  ndraws = 2000        # optional: limit draws for speed/reproducibility
+) %>%
+  select(.draw, Pheno, Time, .epred)
+
+draws_summ <- draws_long %>%
+  group_by(Pheno, Time) %>%
+  summarise(y = mean(.epred),
+            ymin = quantile(.epred, 0.05),
+            ymax = quantile(.epred, 0.95),
+            .groups = "drop")
+  
+  # Generate all pairwise combinations
+  group_combinations <- combn(unique(newdata$Pheno), 2, simplify = FALSE)
+  
+  rope_results <- list()
+  
+  for (pair in group_combinations) {
+    group1 <- pair[1]
+    group2 <- pair[2]
+    contrast_name <- paste(group1, "-", group2)
+
+    # Get draws for each group (now include Time_type for proper matching)
+    group1_data <- draws_long %>% 
+      filter(Pheno == group1) %>% 
+      select(.draw, Time, .epred) %>% 
+      rename(Pred1 = .epred)
+    group2_data <- draws_long %>% 
+      filter(Pheno == group2) %>% 
+      select(.draw, Time, .epred) %>% 
+      rename(Pred2 = .epred)
+
+    # Join on .draw, Time
+    contrast_draws <- left_join(group1_data, group2_data, by = c(".draw", "Time")) %>%
+        mutate(Diff = Pred1 - Pred2)
+
+    contrast_data <- contrast_draws %>%
+    group_by(Time) %>%
+    summarise(
+        Median = median(Diff),
+        HDI_low = hdi(Diff, credMass = 0.95)[1],
+        HDI_high = hdi(Diff, credMass = 0.95)[2],
+        ROPE_prop = mean(Diff > rope_lower & Diff < rope_upper),
+        Pd = max(mean(Diff > 0), mean(Diff < 0)),
+        .groups = "drop"
+    ) %>%
+    mutate(
+            ROPE_Equivalence = case_when(
+                ROPE_prop < 0.05 & Pd > 0.95 ~ "Rejected",
+                ROPE_prop > 0.975 & Pd > 0.95 ~ "Accepted",
+                TRUE ~ "Undecided"
+            ),
+            Contrast = contrast_name
+        ) %>%
+        select(Time, Median, HDI_low, HDI_high, ROPE_prop, Pd, ROPE_Equivalence, Contrast)
+
+    # Add EqType and group for smooth plotting (group by Time_type as well)
+    contrast_data <- contrast_data %>%
+        mutate(EqType = ROPE_Equivalence) %>%
+        group_by(Time) %>%
+        mutate(group = rleid(EqType)) %>%
+        ungroup()
+
+    rope_results[[contrast_name]] <- contrast_data
+  }
+
+  # Combine all contrasts
+  combined_data <- bind_rows(rope_results)
+  
+  return(combined_data)
+}
+
+rope_data <- compute_rope_contrasts_smooth(fit.GAM, Raw2, rope_bound)
+```
+
+## Plot ROPE Comparisons
+
+```{r}
+create_rope_plots_by_contrast <- function(rope_data, rope_bound) {
+  
+  contrasts <- unique(rope_data$Contrast)
+  plots_list <- list()
+  
+  for (contrast in contrasts) {
+    cat_data <- rope_data %>% 
+      filter(Contrast == contrast) %>%
+      arrange(Time)  # Ensure data is sorted by time
+    
+    # Use rleid to create proper groups for consecutive runs of same EqType
+    cat_data$group <- rleid(cat_data$EqType)
+    
+    # Create gaps for smooth transitions (same as your working function)
+    cat_data_with_gaps <- head(do.call(rbind, by(cat_data, cat_data$group, rbind, NA)), -1)
+    cat_data_with_gaps[, c("group", "EqType")] <- lapply(cat_data_with_gaps[, c("group", "EqType")], zoo::na.locf)
+    cat_data_with_gaps[] <- lapply(cat_data_with_gaps, zoo::na.locf, fromLast = TRUE)
+    
+   
+    
+    plot <- ggplot(cat_data_with_gaps, aes(x = Time)) +
+      geom_hline(yintercept = rope_bound, 
+                 linetype = "dashed", color = "darkgrey", alpha = 0.7) +
+      geom_hline(yintercept = -rope_bound, 
+                 linetype = "dashed", color = "darkgrey", alpha = 0.7) +
+      geom_hline(yintercept = 0, linetype = "solid", color = "black", alpha = 0.7) +
+      geom_ribbon(aes(y = Median, ymin = HDI_low, ymax = HDI_high, color = EqType, fill = EqType, group = group), 
+                  linetype = "dashed", alpha = 0.2) +
+      geom_line(aes(y = Median, color = EqType, group = group), linewidth = 1) +
+      scale_fill_manual(values = c(
+        "Rejected" = "firebrick",
+        "Undecided" = "darkgrey",
+        "Accepted" = "steelblue"
+      ), aesthetics = c("color", "fill")) +
+      labs(
+        title = paste("ROPE Analysis: ", contrast),
+        y = "Difference (%)",
+        x = "",
+        caption = paste("ROPE Bound: +/-", rope_bound, "%"),
+        color = "ROPE Decision",
+        fill = "ROPE Decision"
+      ) +
+      # Custom x-axis with period labels
+      scale_x_continuous(
+            breaks = seq(0, 300, by = 50),
+            labels = seq(0, 300, by = 50)
+      ) +
+      theme_classic() +
+      theme(
+        legend.position = "bottom",
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold", size = 8),
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        axis.text.x = element_text(face = "bold", size = 12),
+        plot.title = element_text(hjust = 0.5, face = "bold")
+      )
+    
+    plots_list[[contrast]] <- plot
+  }
+  
+  return(plots_list)
+}
+
+plots_list <- create_rope_plots_by_contrast(rope_data, rope_bound)
+plots_list
+```
+
+```{r}
+save.image("GAM_Reg_Bayesian.RData")
 ```
 
 # Frequentist Alternative using mgcv
 
-## Note: Switch to this section if you prefer classical inference or need faster computation
+::: {.callout-note}
+
+# Switch to this section if you prefer classical inference or need faster computation
+
+:::
 
 ```{r}
 # Fit GAM using mgcv and time
