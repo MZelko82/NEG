@@ -24,7 +24,9 @@ library(purrr)
 
 # Novel Exploration Growth in Elevated Plus Maze
 
-This document provides a streamlined workflow for preprocessing Elevated Plus Maze (EPM) data and calculating Novel Exploration Growth (NEG) metrics. NEG tracks the first visit to discrete areas of the maze over time, capturing both exploratory and avoidance behaviors.
+This document provides a streamlined workflow for preprocessing Elevated Plus Maze (EPM) data and calculating Novel Exploration Growth (NEG) metrics. NEG tracks the first visit to discrete areas of the maze over time, capturing both exploratory and avoidance behaviours.
+
+# Built using R x64 4.4.0, tested upto R x64 4.4.2
 
 ## Test Trial Data Structure Overview
 
