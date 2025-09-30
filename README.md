@@ -40,6 +40,8 @@ Once we have the NEG time series, we can use the differences between arm types t
 - **visualisations/**: Interactive web-based visualization demonstrating rodent behavior patterns
 - **Images/**: Figures and visualization assets
 
+# Note: These scripts are currently compatible with R versions 4.4.0 - 4.4.2 inclusively. 
+
 ### Legacy Versions
 - **legacy/v1/**: Original implementation (deprecated)
 
