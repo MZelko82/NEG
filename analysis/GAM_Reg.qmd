@@ -25,11 +25,11 @@ library(mgcv)      # For Frequentist GAMs
 library(gratia)    # For Frequentist GAM visualization
 library(tidybayes)
 library(HDInterval) # For HDI calculations
-library(httpgd)
 library(data.table)
-hgd()
+library(tidyr)
+# library(httpgd) # For browser-based visualisations in VS Code forks
+# hgd() # Opens port for httpgd visualisations
 ```
-
 # Simulate Data
 
 ## Functions
@@ -93,7 +93,8 @@ Raw2$Expl <- round(Raw2$Expl, 0)
 
 ## Replot downsampled data
 ```{r}
-ggplot(Raw2, aes(Time, Expl, group = n, color = Pheno))+4
+ggplot(Raw2, aes(Time, Expl, group = n, color = Pheno))+
+  geom_line(linewidth =1)+ylim(0,100) +
   scale_color_manual(values = c("#9c1f1f", "#8389a8", "#0e3063"))+ 
   xlab("Time (s)") + ylab("Maze Explored (%)")+
   theme_classic()
