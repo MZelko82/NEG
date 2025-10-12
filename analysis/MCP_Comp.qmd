@@ -5,9 +5,7 @@ format: html
 
 # Bayesian Change Point Modelling and Comparison 
 # Author: Matt Zelko
-# R x64 4.4.0
-# RStudio 2024.04.2+764 "Chocolate Cosmos" Release (e4392fc9ddc21961fd1d0efd47484b43f07a4177, 2024-06-05) for windows
-# Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) RStudio/2024.04.2+764 Chrome/120.0.6099.291 Electron/28.3.1 Safari/537.36, Quarto 1.4.549 (C:/Program Files/Quarto/bin/quarto.exe)
+# R x64 4.5.1
 # This code demonstrates how to build and compare single and dual phase model data using mcp
 # It includes the model specifications, priors, predictive checks and leave-one-out cross validation comparisons used to fit and compare these models
 
@@ -16,6 +14,23 @@ format: html
 library(tidyverse)
 library(mcp)
 library(loo)
+library(brms)
+# library(httpgd) # For browser-based visualisations in VS Code forks
+# hgd()
+```
+
+## Optional: check cores for fitting
+```{r}
+chains_req <- 3
+# Run 3 chains and 3 cores, change to 4 chains and 4 cores if required
+cores_detected <- parallel::detectCores() -1
+if(cores_detected > chains_req){
+  cores_req <- chains_req
+} else {
+  cores_req <- 1
+}
+cores_req
+set.seed(42)
 ```
 
 # Create test set for prior model fitting
@@ -25,7 +40,8 @@ sw_dbl_log2 <- function(a, b, c, d, time){
 }
 
 a = 0.2
-b =  3
+b =  5
+n = 10
 
 # Single Phase
 test_1_phase<- tibble(n = 1:n,
@@ -33,7 +49,9 @@ test_1_phase<- tibble(n = 1:n,
                  c = a, d =  b) %>% 
   tidyr::expand(nesting(n, a, b, c, d),
        time = 1:300) %>% 
-  mutate(y = round(sw_dbl_log2(a, b, c, d, time),0),
+  mutate( y = sw_dbl_log2(a, b, c, d, time),
+          y = y + rnorm(n(), mean = 0, sd = 0.05 * y),  # ±5% Gaussian noise
+          y = round(pmin(pmax(y, 0), 100)),             # clamp and round to 0–100
          Full = 100)
 # Dual Phase
 test_2_phase<- tibble(n = 1:n,
@@ -41,15 +59,17 @@ test_2_phase<- tibble(n = 1:n,
                  c = 0.2, d =  35) %>% 
   tidyr::expand(nesting(n, a, b, c, d),
        time = 1:300) %>% 
-  mutate(y = round(sw_dbl_log2(a, b, c, d, time),0),
+  mutate( y = sw_dbl_log2(a, b, c, d, time),
+          y = y + rnorm(n(), mean = 0, sd = 0.05 * y),  # ±5% Gaussian noise
+          y = round(pmin(pmax(y, 0), 100)),             # clamp and round to 0–100
          Full = 100)
 ```
 
-## Optional: Plot test data
+# Optional: Plot test data
 ```{r}
 ggplot() +
-  geom_line(data = test_1_phase, aes(x = time, y = y), color = "red") +
-  geom_line(data =test_2_phase, aes(x = time, y = y), color = "purple") +
+  geom_line(data = test_1_phase, aes(x = time, y = y, group = n), color = "red") +
+  geom_line(data = test_2_phase, aes(x = time, y = y, group = n), color = "purple") +
   theme_minimal()
 ```
 
@@ -57,99 +77,148 @@ ggplot() +
 ```{r}
 model_CP1 = list(
   y | trials(Full) ~ 1,
-  ~ 0 + time 
+  ~ 0 + time,
+  ~ 0
 )
-fitmodel_CP1 = mcp(model_CP1, family = binomial(), sample = FALSE)
-str(fitmodel_CP1$pars, vec.len = 99)  # Compact display
-summary(fitmodel_CP1)
+#fitmodel_CP1 = mcp(model_CP1, family = binomial(), sample = FALSE, cores = cores_req, chains = chains_req)
+#str(fitmodel_CP1$pars, vec.len = 99)  # Compact display
+#summary(fitmodel_CP1)
 ```
 
-## Build Priors
+## Optional: Build Priors (can aid in model fitting; however defaults are usually sufficient)
 ```{r echo=FALSE, message=FALSE}
-prior_CP1 = list(
-    int_1 = "dnorm(-4, 40) T(-4, -1)",
-    cp_1 =  "dirichlet(1)",
-    time_2 = "dbeta(1,15)"
-)
-empty_manual_CP1 = mcp(model_CP1, family = binomial(), prior=prior_CP1, sample = FALSE)
-str(empty_manual_CP1$prior, vec.len = 99)
-summary(empty_manual_CP1)
+# prior_CP1 = list(
+#     int_1 = "dnorm(0, 4)", # Intercept: constrained to zero
+#     cp_1 =  "dirichlet(1)", # First change point: uniform over the x-range
+#     time_2 = "dnorm(0, 0.5)" # First slope: positive only, moderate scale if 'time' is z-scored or 0–1
+#     cp_2 = "dirichlet(1)"
+#     cp_2 = "dirichlet(1)"
+# )
+# empty_manual_CP1 = mcp(model_CP1, family = binomial(), prior=prior_CP1, sample = FALSE, cores = cores_req, chains = chains_req)
+# str(empty_manual_CP1$prior, vec.len = 99)
+# summary(empty_manual_CP1)
 ```
 
-## Prior Predictive Check
+## Optional: Prior Predictive Check (only required if priors are built)
 ```{r}
-prior_manual_CP1 = mcp(model_CP1, family = binomial(), data = test_1_phase, 
-                       prior=prior_CP1, sample = "prior")
+# prior_manual_CP1 = mcp(model_CP1, family = binomial(), data = test_1_phase, 
+#                        #prior=prior_CP1, 
+#                        sample = "prior", cores = cores_req, chains = chains_req)
 
-# Plot prior_manual_CP1
-plot(prior_manual_CP1)
+# # Plot prior_manual_CP1
+# plot(prior_manual_CP1, lines = 100)
 ```
 
 # Fit Single Phase Prior Model on Single Phase Data
 ```{r}
-test_manual_CP1 = mcp(model_CP1, family = binomial(), adapt = 2000, iter = 20000, 
-                      data = test_1_phase, prior=prior_CP1, sample = "both")
-plot(test_manual_CP1)
+test_manual_CP1 = mcp(model_CP1, family = binomial(), adapt = 10000, iter = 20000, 
+                      #prior = prior_CP1,
+                      data = test_1_phase,  sample = "both", cores = cores_req, chains = chains_req)
+plot(test_manual_CP1, lines = 100)
+plot(test_manual_CP1, prior = TRUE) # Prior Predictive Check
 summary(test_manual_CP1)
 loo(test_manual_CP1)
+plot_pars(test_manual_CP1, prior = TRUE) # Check Prior Distributions
+plot_pars(test_manual_CP1) # Check Posterior Distributions
 ```
+
+test_manual_CP1 parameters and plot show initial growth between first change point at 3 seconds and second change point at 46 seconds. This is followed by a plateau for the remainder of the time.
+
 # Build Dual Phase with Plateau Model
 ```{r}
 model_CP2= list(
-  y | trials(Full) ~ 1 + time, # Positive Slope
+  y | trials(Full) ~ 1, # Positive Slope
+    ~ 0 + time,
     ~ 0,
-  ~ 0 + time
+  ~ 0 + time,
+  ~ 0
 )
-fitmodel_CP2 = mcp(model_CP2, family = binomial(), sample = FALSE)
-str(fitmodel_CP2$pars, vec.len = 99)  # Compact display
-summary(fitmodel_CP2)
-
+# fitmodel_CP2 = mcp(model_CP2, family = binomial(), sample = FALSE, cores = cores_req, chains = chains_req)
+# str(fitmodel_CP2$pars, vec.len = 99)  # Compact display
+#summary(fitmodel_CP2)
 ```
 
-## Build Priors
+## Optional: Build Priors (can aid in model fitting; however defaults are usually sufficient)
 ```{r}
-prior_CP2 = list(
-    int_1 = "dnorm(-4, 40) T(-4, -1)", 
-    time_1 = "dbeta(1,15)",
-    cp_1 =  "dunif(MINX, MAXX)", 
-    cp_2 =  "dunif(cp_1, MAXX)",
-    time_3 = "dbeta(1,15)"
-)
+# prior_CP2 <- list(
+#   #int_1 = "dnorm(-4, 3) T(-4, 0)", # Intercept: constrained to zero
+#   int_1 = "dnorm(-4, 1) T(-4,)", # Intercept: constrained to zero
+#   time_1 = "dnorm(0, 0.2) T(0,)", # First slope: positive only, moderate scale if 'time' is z-scored or 0–1
+#   #cp_1   = "dirichlet(1)", # First change point: uniform over the x-range
+#   #cp_2   = "dirichlet(3)", # Second change point: constrained to occur after cp_1
+#   time_3 = "dnorm(0, 1) T(0,)" # Second slope (change relative to previous segment, still positive)
+#   #cp_3 = "dirichlet(3)"
+# )
 
-empty_manual_CP2 = mcp(model_CP2, family = binomial(), prior=prior_CP2, sample = FALSE, par_x = "time")
-str(empty_manual_CP2$prior, vec.len = 99)
-summary(empty_manual_CP2)
+# empty_manual_CP2 = mcp(model_CP2, family = binomial(), prior=prior_CP2, sample = FALSE, par_x = "time", cores = cores_req, chains = chains_req)
+# str(empty_manual_CP2$prior, vec.len = 99)
+# summary(empty_manual_CP2)
 ```
 
-## Prior Predictive Check
+## Optional: Prior Predictive Check (only required if priors are built)
 ```{r}
-prior_manual_CP2 = mcp(model_CP2, family = binomial(), data = test_2_phase, prior=prior_CP2, sample = "prior")
+# prior_manual_CP2 = mcp(model_CP2, family = binomial(), data = test_2_phase, prior=prior_CP2, sample = "prior", cores = cores_req, chains = chains_req)
 
 # Plot prior_manual_CP1
-plot(prior_manual_CP2)
+# plot(prior_manual_CP2, lines = 100)
 ```
 
 # Fit Dual Phase Prior Model on Dual Phase Data
 ```{r}
-test_manual_CP2 = mcp(model_CP2, family = binomial(), adapt = 2000, iter = 20000, data = test_2_phase, prior=prior_CP2, sample = "both")
-plot(test_manual_CP2)
+test_manual_CP2 = mcp(model_CP2, family = binomial(), adapt = 10000, iter = 20000, data = test_2_phase, 
+                      #prior=prior_CP2, # use priors if required
+                      sample = "both", cores = cores_req, chains = chains_req)
+plot(test_manual_CP2, lines = 100)
+plot(test_manual_CP2, lines = 100, prior = TRUE) # Prior Predictive Check
 summary(test_manual_CP2)
 loo(test_manual_CP2)
+plot_pars(test_manual_CP2, prior = TRUE) # Check Prior Distributions
+plot_pars(test_manual_CP2) # Check Posterior Distributions
 ```
 
-# Compare Models using CP2 test data
+test_manual_CP2 parameters show the first growth phase between change point at 1 second and change point 2 at 34.8 seconds. This is followed by a plateau to change point 3 at 164.75 before the second growth phase which lasts until change point 4 at 196.02.
+
+# Compare Models Fit for test data
 ## Fit Single Phase model onto Dual Phase data
 ```{r}
-test_manual_CP2.1 = mcp(model_CP1, family = binomial(), adapt = 2000, iter = 20000, 
-                      data = test_2_phase, prior=prior_CP1, sample = "both")
-plot(test_manual_CP2.1)
+test_manual_CP1.2 = mcp(model_CP1, family = binomial(), adapt = 10000, iter = 20000, data = test_2_phase, 
+                        #prior=prior_CP1, # use priors if required
+                        sample = "both", cores = cores_req, chains = chains_req)
+plot(test_manual_CP1.2, lines = 100)
+plot(test_manual_CP1.2, lines = 100, prior = TRUE) # Prior Predictive Check
+summary(test_manual_CP1.2)
+loo(test_manual_CP1.2)
+plot_pars(test_manual_CP1.2, prior = TRUE) # Check Prior Distributions
+plot_pars(test_manual_CP1.2) # Check Posterior Distributions
+```
+
+test_manual_CP1.2 parameters show the first growth phase after change point 1 at 1 second growing continuously until change point 2 at 300 seconds.
+
+## Loo compare Dual Phase Data Fits
+```{r}
+loo_compare(loo(test_manual_CP2), loo(test_manual_CP1.2))
+```
+
+Loo comparison shows test_manual_CP2 outperforms test_manual_CP2.1.
+
+## Fit Dual Phase Model on Single Phase Data
+```{r}
+test_manual_CP2.1 = mcp(model_CP2, family = binomial(), adapt = 10000, iter = 20000, data = test_1_phase, 
+                        #prior=prior_CP2, # use priors if required
+                        sample = "both", cores = cores_req, chains = chains_req)
+plot(test_manual_CP2.1, lines = 100)
+plot(test_manual_CP2.1, lines = 100, prior = TRUE)
 summary(test_manual_CP2.1)
 loo(test_manual_CP2.1)
+plot_pars(test_manual_CP2.1, prior = TRUE)
+loo_compare(loo(test_manual_CP1), loo(test_manual_CP2.1))
 ```
 
-## Loo compare
+test_manual_CP2.1 parameters show large variance in change points 2,3, and 4 with overlapping intervals.
+
+## Loo compare Single Phase Data Fits
 ```{r}
-loo_compare(loo(test_manual_CP2), loo(test_manual_CP2.1))
+loo_compare(loo(test_manual_CP1), loo(test_manual_CP2.1))
 ```
 
-An additional function for visualing the model output can be found at https://github.com/MZelko82/mcp_scripts
+Loo comparison shows test_manual_CP1 outperforms test_manual_CP2.1.

@@ -275,7 +275,6 @@ rope_data <- compute_rope_contrasts_smooth(fit.GAM, Raw2, rope_bound)
 ```
 
 ## Plot ROPE Comparisons
-
 ```{r}
 create_rope_plots_by_contrast <- function(rope_data, rope_bound) {
   
