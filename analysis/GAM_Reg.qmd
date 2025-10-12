@@ -357,6 +357,13 @@ save.image("GAM_Reg_Bayesian.RData")
 :::
 
 ```{r}
+# Make Pheno and n factors for gam model
+# make factors
+Raw <- Raw |>
+  dplyr::mutate(
+    Pheno = factor(Pheno),
+    n = factor(n)
+  )
 # Fit GAM using mgcv and time
 fit.gam.freq <- gam(Expl ~ 0 + Pheno + s(Time, by = Pheno, k = 30) + s(n, bs = "re"), 
                     data = Raw, 
@@ -378,7 +385,7 @@ gam.check(fit.gam.freq)
 plot(fit.gam.freq, pages = 1)
 
 # Alternative visualization using gratia
-draw(fit.gam.freq)
+draw(fit.gam.freq, residuals = TRUE)
 
 # Compute confidence intervals for smooth terms
 # Note: This is the frequentist equivalent of the Bayesian credible intervals
@@ -390,24 +397,6 @@ plot(sm) +
 appraise(fit.gam.freq)
 ```
 
-## Model Comparison (if you have multiple models)
-
-```{r}
-# AIC/BIC comparison (Frequentist alternative to LOO)
-# Example with a simpler model with time
-fit.gam.freq.simple <- gam(Expl ~ Pheno + s(Time, k = 30) + s(n, bs = "re"), 
-                          data = Raw, 
-                          method = "REML")
-
-# Example with a simpler model with centered time
-#fit.gam.freq.simple <- gam(Expl ~ Pheno + s(Time_C, k = 30) + s(n, bs = "re"), 
-
-AIC(fit.gam.freq, fit.gam.freq.simple)
-BIC(fit.gam.freq, fit.gam.freq.simple)
-
-# Compare model predictions
-predictions.freq <- predict(fit.gam.freq, type = "response", se.fit = TRUE)
-```
 
 # Note on Interpretation Differences
 
