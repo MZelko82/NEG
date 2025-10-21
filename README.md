@@ -19,7 +19,7 @@ Once we have the NEG time series, we can use the differences between arm types t
 
 <br>
 
-### *Click the preview image below to view a interactive visualisation of how phenotypical movements in the maze are mapped to the NEG by arm type and for the total maze*
+### *Click the preview image below to view an interactive visualisation of how phenotypical movements in the maze are mapped to the NEG by arm type and for the total maze*
 <br>
 
 [![Interactive NEG Visualization Preview](Images/NEG_Preview3.png)](https://mzelko82.github.io/NEG/visualisations/)
@@ -37,10 +37,10 @@ Once we have the NEG time series, we can use the differences between arm types t
 - **R/**: Preprocessing functions and utilities
   - `preprocess.R`: Core preprocessing functions including coordinate alignment correction
 - **test_data/**: Example datasets for testing and validation
-- **visualisations/**: Interactive web-based visualization demonstrating rodent behavior patterns
+- **visualisations/**: Interactive web-based visualisation demonstrating rodent behaviour patterns
 - **Images/**: Figures and visualization assets
 
-# Note: These scripts are currently compatible with R versions 4.4.0 - 4.4.2 inclusively. 
+# Note: These scripts are currently compatible with R versions 4.4.0 - 4.5.1 inclusively. 
 
 ### Legacy Versions
 - **legacy/v1/**: Original implementation (deprecated)
@@ -48,8 +48,8 @@ Once we have the NEG time series, we can use the differences between arm types t
 ## Key Features
 
 - **Pre-processing:** Pre-process coordinates into Novel Exploration Growth over time
-    - Pre-processing includes a custom function that detects when XY coordinates for individual samples are not aligned with origin (0,0) and uses a clustering algorithm to shift the location based on where the centre zone points are located     
-- **Bayesian Change-point Analysis** Localise change-points in each time series to evaluate phasic nature of exploration
+    - Pre-processing includes a custom function that detects when XY coordinates for individual samples are not aligned with the origin (0,0) and uses a clustering algorithm to shift the location based on where the centre zone points are located     
+- **Bayesian Change-point Analysis** Localise change-points in each time series to evaluate the phasic nature of exploration
     - This is completed primarily through the use of the [mcp](https://lindeloev.github.io/mcp/) package  
 - **Bayesian Generalised Additive Model Analysis** Compare effects of interest using GAM models
     - This is completed primarily through the use of the [brms](https://paul-buerkner.github.io/brms/) and [mgcv](https://www.maths.ed.ac.uk/~swood34/mgcv/) packages   
@@ -63,7 +63,7 @@ For a more detailed workflow, see the publication below.
 ## Running the test analysis
 
 Each quarto document contains test data that can be processed in a chunk-by-chunk fashion or rendered as a HTML document (see NEG_Calc.html as an example).
-- NEG_Calc.qmd uses test data stored in excel spreadsheets similar to ones generated from the Ethovision software
+- NEG_Calc.qmd uses test data stored in Excel spreadsheets similar to those generated from the Ethovision software
 - MCP_Comp.qmd and GAM_Reg.qmd both use simulated data that mimics what is processed in NEG_Calc.qmd
 
 ## Citation
