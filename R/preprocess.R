@@ -140,7 +140,7 @@ apply_center_shift <- function(data, shift_values) {
 }
 
 #' Read and clean EPM trial data
-read_and_clean_data <- function(file_path, ...) {
+read_and_clean_data <- function(file_path, head_skip, data_skip, meta_range, ...) {
   # Check if file exists
   if (!file.exists(file_path)) {
     stop("File does not exist: ", file_path)
@@ -152,21 +152,91 @@ read_and_clean_data <- function(file_path, ...) {
   }
   
   cat("\nProcessing file:", basename(file_path), "\n")
-  
+
+
   # Read metadata
   metadata <- tryCatch({
     cat("Reading metadata...\n")
-    metadata <- readxl::read_xlsx(file_path, range = "B32:B35", col_names = FALSE)
-    if (nrow(metadata) != 4) {
-      stop("Metadata rows 32-35 are incomplete or missing")
+    meta_values <- readxl::read_xlsx(file_path, range = meta_range, col_names = FALSE)
+    parse_meta_range <- function(range_str) {
+      match <- regexec("^([A-Za-z]+)(\\d+):([A-Za-z]+)(\\d+)$", range_str)
+      parts <- regmatches(range_str, match)[[1]]
+      if (length(parts) == 0) {
+        stop("meta_range must be in Excel A1:B2 format")
+      }
+      list(
+        start_col = toupper(parts[2]),
+        start_row = as.integer(parts[3]),
+        end_col = toupper(parts[4]),
+        end_row = as.integer(parts[5])
+      )
     }
     
-    metadata <- metadata %>%
-      rename(value = 1) %>%
-      mutate(field = c("RatID", "Diet", "Strain", "Treatment")) %>%
+    col_to_num <- function(col) {
+      letters <- strsplit(col, "")[[1]]
+      num <- 0
+      for (ch in letters) {
+        num <- num * 26 + match(ch, LETTERS)
+      }
+      num
+    }
+    
+    num_to_col <- function(num) {
+      if (num <= 0) stop("Column index must be positive")
+      letters <- c()
+      while (num > 0) {
+        rem <- (num - 1) %% 26
+        letters <- c(LETTERS[rem + 1], letters)
+        num <- (num - 1) %/% 26
+      }
+      paste(letters, collapse = "")
+    }
+    
+    parsed <- parse_meta_range(meta_range)
+    if (parsed$start_col != parsed$end_col) {
+      stop("meta_range must be a single column (e.g., B32:B35)")
+    }
+    
+    left_col_num <- col_to_num(parsed$start_col) - 1
+    if (left_col_num <= 0) {
+      stop("Metadata range must not start in the first column to read left-adjacent labels")
+    }
+    
+    left_col <- num_to_col(left_col_num)
+    meta_left_range <- paste0(left_col, parsed$start_row, ":", left_col, parsed$end_row)
+    meta_labels <- readxl::read_xlsx(file_path, range = meta_left_range, col_names = FALSE)
+    
+    if (!all(dim(meta_values) == dim(meta_labels))) {
+      stop("Metadata values and left-adjacent labels ranges are mismatched")
+    }
+    
+    meta_df <- tibble(
+      field = as.character(unlist(meta_labels, use.names = FALSE)),
+      value = as.character(unlist(meta_values, use.names = FALSE))
+    ) %>%
+      mutate(field = trimws(field)) %>%
+      filter(!is.na(field), field != "")
+    
+    if (nrow(meta_df) == 0) {
+      stop("No metadata labels found in left-adjacent cells")
+    }
+    if (anyDuplicated(meta_df$field)) {
+      stop("Duplicate metadata labels found in left-adjacent cells")
+    }
+    
+    meta_wide <- meta_df %>%
       pivot_wider(names_from = field, values_from = value)
     
-    metadata
+    normalize_meta_name <- function(x) {
+      x <- trimws(x)
+      x <- gsub("[^A-Za-z0-9]+", "_", x)
+      x <- gsub("^_+|_+$", "", x)
+      x <- gsub("_+", "_", x)
+      tolower(x)
+    }
+    
+    meta_wide %>%
+      rename_with(normalize_meta_name)
     
   }, error = function(e) {
     cat("ERROR reading metadata:", e$message, "\n")
@@ -177,34 +247,68 @@ read_and_clean_data <- function(file_path, ...) {
     stop("Failed to read metadata")
   }
   
+
   # Read time series data
   data <- tryCatch({
     cat("Reading time series data...\n")
-    headers <- readxl::read_xlsx(file_path, skip = 36, n_max = 1)
+    header_candidates <- unique(c(head_skip, head_skip - 1, head_skip + 1, head_skip - 2, head_skip + 2))
+    header_candidates <- header_candidates[header_candidates >= 0]
+    data_offset <- data_skip - head_skip
+    header_skip <- head_skip
+    data_start_skip <- data_skip
+    headers <- NULL
+    
+    for (candidate in header_candidates) {
+      candidate_headers <- readxl::read_xlsx(
+        file_path,
+        skip = candidate,
+        n_max = 1,
+        .name_repair = "minimal"
+      )
+      candidate_names <- names(candidate_headers)
+      if (all(c("Trial time", "X center", "Y center") %in% candidate_names)) {
+        headers <- candidate_headers
+        header_skip <- candidate
+        data_start_skip <- candidate + data_offset
+        break
+      }
+    }
+    
+    if (is.null(headers)) {
+      headers <- readxl::read_xlsx(file_path, skip = head_skip, n_max = 1, .name_repair = "minimal")
+    }
     
     data <- readxl::read_xlsx(file_path, 
-                             skip = 38,
+                             skip = data_start_skip,
                              col_names = names(headers),
-                             na = c("", "-", "NA"))
+                             na = c("", "-", "NA"),
+                             .name_repair = "minimal")
+    
+    # Normalize column names early to avoid case mismatches
+    data <- data %>%
+      rename_with(~tolower(.x))
     
     # Clean the data
     data <- data %>%
-      mutate(across(c(`Trial time`, `X center`, `Y center`), 
+      mutate(across(c(`trial time`, `x center`, `y center`), 
                    ~as.numeric(ifelse(. == "-", NA, .))))
     
     # Check for required columns
     actual_cols <- names(data)
     missing_cols <- c()
     
-    if(!"Trial time" %in% actual_cols) missing_cols <- c(missing_cols, "Trial time")
-    if(!"X center" %in% actual_cols) missing_cols <- c(missing_cols, "X center")
-    if(!"Y center" %in% actual_cols) missing_cols <- c(missing_cols, "Y center")
+    if(!"trial time" %in% actual_cols) missing_cols <- c(missing_cols, "Trial time")
+    if(!"x center" %in% actual_cols) missing_cols <- c(missing_cols, "X center")
+    if(!"y center" %in% actual_cols) missing_cols <- c(missing_cols, "Y center")
     
     open_arm_cols <- c("In zone(open_arm_1 / center-point)", "In zone(open_arm_2 / center-point)")
     closed_arm_cols <- c("In zone(closed_arm_1 / center-point)", "In zone(closed_arm_2 / center-point)")
     
-    has_open_arms <- all(open_arm_cols %in% actual_cols)
-    has_closed_arms <- all(closed_arm_cols %in% actual_cols)
+    open_arm_cols_norm <- tolower(open_arm_cols)
+    closed_arm_cols_norm <- tolower(closed_arm_cols)
+    
+    has_open_arms <- all(open_arm_cols_norm %in% actual_cols)
+    has_closed_arms <- all(closed_arm_cols_norm %in% actual_cols)
     
     if(!has_open_arms) missing_cols <- c(missing_cols, "open arm zones")
     if(!has_closed_arms) missing_cols <- c(missing_cols, "closed arm zones")
@@ -219,30 +323,30 @@ read_and_clean_data <- function(file_path, ...) {
     
     # Convert zone columns to numeric
     data <- data %>%
-      mutate(across(starts_with("In zone"), ~as.numeric(ifelse(. == "-", 0, .))))
+      mutate(across(starts_with("in zone"), ~as.numeric(ifelse(. == "-", 0, .))))
     
     # Create InOpen and InClosed columns
     data <- data %>%
       mutate(
         InOpen = case_when(
-          `In zone(open_arm_1 / center-point)` == 1 | `In zone(open_arm_2 / center-point)` == 1 ~ 1,
+          `in zone(open_arm_1 / center-point)` == 1 | `in zone(open_arm_2 / center-point)` == 1 ~ 1,
           TRUE ~ 0
         ),
         InClosed = case_when(
-          `In zone(closed_arm_1 / center-point)` == 1 | `In zone(closed_arm_2 / center-point)` == 1 ~ 1,
+          `in zone(closed_arm_1 / center-point)` == 1 | `in zone(closed_arm_2 / center-point)` == 1 ~ 1,
           TRUE ~ 0
         ),
         InCentre = case_when(
-          `In zone(centre_zone / center-point)` == 1 ~ 1,
+          `in zone(centre_zone / center-point)` == 1 ~ 1,
           TRUE ~ 0
         )
       )
     
     # Create clean data frame
     data <- tibble(
-      Time = as.numeric(data$`Trial time`),
-      X = as.numeric(data$`X center`),
-      Y = as.numeric(data$`Y center`),
+      Time = as.numeric(data$`trial time`),
+      X = as.numeric(data$`x center`),
+      Y = as.numeric(data$`y center`),
       InOpen = data$InOpen,
       InClosed = data$InClosed,
       InCentre = data$InCentre
@@ -364,9 +468,14 @@ create_complete_arm_grids <- function(data) {
     )
   ) %>%
     mutate(
+      depth_low = pmin(depth_start, depth_end),
+      depth_high = pmax(depth_start, depth_end),
+      depth_start = depth_low,
+      depth_end = depth_high,
       band_id = row_number(),
       grid_type = "open"
-    )
+    ) %>%
+    select(-depth_low, -depth_high)
   
   # For closed arms (along x-axis)
   closed_positive_depths <- seq(from = center_x_max, 
@@ -392,9 +501,14 @@ create_complete_arm_grids <- function(data) {
     )
   ) %>%
     mutate(
+      depth_low = pmin(depth_start, depth_end),
+      depth_high = pmax(depth_start, depth_end),
+      depth_start = depth_low,
+      depth_end = depth_high,
       band_id = row_number(),
       grid_type = "closed"
-    )
+    ) %>%
+    select(-depth_low, -depth_high)
   
   # Combine all bands
   total_bands <- bind_rows(open_bands, closed_bands)
@@ -427,7 +541,7 @@ calculate_grid_exploration <- function(trial_data, grid_data) {
       return(NULL)
     }
     
-    total_bands <- nrow(grid_type_df) / 2
+    total_bands <- nrow(grid_type_df)
     
     if (total_bands == 0) {
       return(NULL)
@@ -510,7 +624,7 @@ calculate_grid_exploration <- function(trial_data, grid_data) {
 #' @param file_pattern Regex pattern to match files
 #' @param max_files Optional limit on number of files to process
 #' @return Combined exploration data with consistent grid across all trials
-process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx$", max_files = NULL) {
+process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx$", max_files = NULL, head_skip, data_skip, meta_range) {
   # List all trial files matching the pattern
   trial_files <- list.files(data_path, 
                            pattern = file_pattern,
@@ -536,7 +650,12 @@ process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx
     
     tryCatch({
       # Read and preprocess single file
-      trial_data <- read_and_clean_data(f)
+      trial_data <- read_and_clean_data(
+        f,
+        head_skip = head_skip,
+        data_skip = data_skip,
+        meta_range = meta_range
+      )
       
       # Store the nested data
       all_trial_data[[i]] <- trial_data
@@ -604,12 +723,35 @@ process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx
     if (is.null(all_trial_data[[i]])) next
     
     trial_data <- all_trial_data[[i]]
-    cat("Calculating exploration for trial", i, ":", trial_data$RatID, "\n")
+    get_meta <- function(df, name) {
+      if (name %in% names(df)) {
+        return(df[[name]])
+      }
+      NA_character_
+    }
+    find_id_column <- function(df) {
+      if ("rat_id" %in% names(df)) {
+        return("rat_id")
+      }
+      id_cols <- grep("id", names(df), ignore.case = TRUE, value = TRUE)
+      if (length(id_cols) > 0) {
+        return(id_cols[[1]])
+      }
+      NULL
+    }
+    cat("Calculating exploration for trial", i, ":", get_meta(trial_data, "rat_id"), "\n")
     
     tryCatch({
       # Extract metadata
       metadata <- trial_data %>%
-        select(RatID, Diet, Strain, Treatment)
+        select(-data)
+      
+      id_col <- find_id_column(metadata)
+      if (is.null(id_col)) {
+        metadata$id <- paste0("trial_", i)
+        cat("No ID column found in metadata for trial", i, "- assigned unique id:", metadata$id, "\n")
+        id_col <- "id"
+      }
       
       # Unnest data for this trial
       trial_unnested <- trial_data %>%
@@ -620,17 +762,25 @@ process_multiple_files <- function(data_path, file_pattern = "^NEG_Test.*\\.xlsx
       exploration_data <- calculate_grid_exploration(trial_unnested, master_grid)
       
       # Add metadata to results
-      trial_id <- paste(metadata$RatID, metadata$Diet, metadata$Strain, sep="_")
+      trial_id <- if (all(c("rat_id", "diet", "strain") %in% names(metadata))) {
+        paste(metadata$rat_id, metadata$diet, metadata$strain, sep = "_")
+      } else if (!is.null(id_col)) {
+        as.character(metadata[[id_col]])
+      } else if (ncol(metadata) > 0) {
+        as.character(metadata[[1]])
+      } else {
+        as.character(trial_data$filename)
+      }
       
       exploration_data <- exploration_data %>%
         mutate(
-          RatID = metadata$RatID,
-          Diet = metadata$Diet,
-          Strain = metadata$Strain,
-          Treatment = metadata$Treatment,
           trial_id = trial_id,
           filename = trial_data$filename
         )
+      missing_meta <- setdiff(names(metadata), names(exploration_data))
+      if (length(missing_meta) > 0) {
+        exploration_data <- bind_cols(exploration_data, metadata[missing_meta])
+      }
       
       all_exploration_results[[i]] <- exploration_data
       

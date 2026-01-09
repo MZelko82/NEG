@@ -71,7 +71,7 @@ if (file.exists("test_data/NEG_Test_1.xlsx")) {
 }
 
 # Read and preprocess the data file
-trials_data <- read_and_clean_data(file_path)
+trials_data <- read_and_clean_data(file_path, head_skip = 36, data_skip = 38, meta_range = "B32:B35")
 
 # Examine the structure of the preprocessed data
 glimpse(trials_data)
@@ -89,7 +89,7 @@ First, we need to unnest the data structure for further analysis:
 unnest_trials <- function(nested_data) {
   nested_data %>%
     unnest(data) %>%
-    group_by(filename, RatID, Diet, Strain, Treatment)
+    group_by(filename, rat_id, diet, strain, treatment_condition)
 }
 
 # Unnest the trials data for use in subsequent steps
@@ -220,7 +220,7 @@ if (file.exists("test_data")) {
 
 # Process files with combined grid approach
 # This ensures all trials use the same grid boundaries for fair comparison
-all_exploration_data <- process_multiple_files(data_path, file_pattern)
+all_exploration_data <- process_multiple_files(data_path, file_pattern, head_skip = 36, data_skip = 38, meta_range = "B32:B35")
 
 # Check the master grid summary
 get_grid_summary(all_exploration_data)
@@ -238,7 +238,7 @@ If you have multiple trials with different conditions, you can create summary vi
 ```{r summarize_exploration}
 # Create summary data
 exploration_summary <- all_exploration_data %>%
-  group_by(Diet, Strain, grid_type, Time) %>%
+  group_by(diet, strain, grid_type, Time) %>%
   summarise(
     mean_exploration_percentage = mean(exploration_percentage), 
     sd_exploration_percentage = sd(exploration_percentage),
@@ -255,7 +255,7 @@ The plot below shows that the Control group explores the closed arms rapidly and
 ggplot(exploration_summary %>% filter(grid_type != "total")) +
   geom_line(aes(x = Time, y = mean_exploration_percentage, 
                 color = grid_type, 
-                group = interaction(Diet, Strain, grid_type)), linewidth = 1) +
+                group = interaction(diet, strain, grid_type)), linewidth = 1) +
   geom_ribbon(aes(x = Time, 
                  ymin = mean_exploration_percentage - sd_exploration_percentage, 
                  ymax = mean_exploration_percentage + sd_exploration_percentage, 
@@ -265,7 +265,7 @@ ggplot(exploration_summary %>% filter(grid_type != "total")) +
   labs(title = "Novel Exploration Growth by Group",
        x = "Time (s)",
        y = "NEG (%)") +
-  facet_grid(Diet ~ Strain) +
+  facet_grid(diet ~ strain) +
   theme_minimal()
 ```
 
@@ -276,11 +276,11 @@ ggplot(exploration_summary %>% filter(grid_type != "total")) +
 ggplot(all_exploration_data %>% filter(grid_type != "total")) +
   geom_line(aes(x = Time, y = exploration_percentage, 
                 color = grid_type, 
-                group = interaction(RatID, grid_type))) +
+                group = interaction(rat_id, grid_type))) +
   scale_color_discrete(name = "Arm Type") +
   labs(title = "NEG Traces by Group",
        x = "Time (s)",
        y = "NEG (%)") +
-  facet_grid(Diet ~ RatID) +
+  facet_grid(diet ~ rat_id) +
   theme_minimal()
 ```
