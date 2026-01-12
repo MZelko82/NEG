@@ -1,3 +1,9 @@
+> **Important notice (updated 2026-01-12)**  
+> A bug affecting the calculation of **exploration percentages** was present in this repository before commit [966dd74](https://github.com/MZelko82/NEG/commit/966dd74aa3a2bcd3edef03c447dc72a40db2837e).  
+> If you used this code before this date, your values for this metric may be inaccurate.  
+> The methodology described in the paper is unchanged; this update only corrects the implementation in this repository.  
+> Please update to the latest version and re-run the analysis if you rely on this metric.
+
 # Novel Exploration Growth (NEG)
 
 
