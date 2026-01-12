@@ -424,6 +424,53 @@ read_and_clean_data <- function(file_path, head_skip, data_skip, meta_range, ...
 
 #' Create complete arm grids
 create_complete_arm_grids <- function(data) {
+  safe_seq <- function(from, to, by) {
+    if (any(!is.finite(c(from, to, by)))) {
+      return(numeric(0))
+    }
+    if (from == to) {
+      return(from)
+    }
+    if ((to > from && by <= 0) || (to < from && by >= 0)) {
+      return(numeric(0))
+    }
+    seq(from = from, to = to, by = by)
+  }
+  
+  make_open_bands <- function(depths, x_min, x_max) {
+    if (length(depths) < 2 || any(!is.finite(c(x_min, x_max)))) {
+      return(tibble(
+        depth_start = numeric(0),
+        depth_end = numeric(0),
+        x_min = numeric(0),
+        x_max = numeric(0)
+      ))
+    }
+    tibble(
+      depth_start = head(depths, -1),
+      depth_end = tail(depths, -1),
+      x_min = x_min,
+      x_max = x_max
+    )
+  }
+  
+  make_closed_bands <- function(depths, y_min, y_max) {
+    if (length(depths) < 2 || any(!is.finite(c(y_min, y_max)))) {
+      return(tibble(
+        depth_start = numeric(0),
+        depth_end = numeric(0),
+        y_min = numeric(0),
+        y_max = numeric(0)
+      ))
+    }
+    tibble(
+      depth_start = head(depths, -1),
+      depth_end = tail(depths, -1),
+      y_min = y_min,
+      y_max = y_max
+    )
+  }
+  
   # Filter data for each area
   open_arms_data <- data %>% 
     filter(InOpen == 1, InCentre == 0) %>%
@@ -438,34 +485,43 @@ create_complete_arm_grids <- function(data) {
     filter(InCentre == 1) %>%
     filter(!is.na(x_m) & !is.na(y_m))
   
+  if (nrow(center_data) == 0) {
+    warning("No center zone points found; grid will be empty or unreliable.")
+  }
+  if (nrow(open_arms_data) == 0) {
+    warning("No open arm points found; open arm grid will be empty.")
+  }
+  if (nrow(closed_arms_data) == 0) {
+    warning("No closed arm points found; closed arm grid will be empty.")
+  }
+  
   # Find the boundaries of the center zone
   center_x_min <- min(center_data$x_m, na.rm = TRUE)
   center_x_max <- max(center_data$x_m, na.rm = TRUE)
   center_y_min <- min(center_data$y_m, na.rm = TRUE)
   center_y_max <- max(center_data$y_m, na.rm = TRUE)
   
+  open_x_min <- min(open_arms_data$x_m, na.rm = TRUE)
+  open_x_max <- max(open_arms_data$x_m, na.rm = TRUE)
+  closed_y_min <- min(closed_arms_data$y_m, na.rm = TRUE)
+  closed_y_max <- max(closed_arms_data$y_m, na.rm = TRUE)
+  
   # For open arms (along y-axis)
-  open_positive_depths <- seq(from = center_y_max, 
-                            to = max(open_arms_data$y_m, na.rm = TRUE), 
-                            by = 2)
-  open_negative_depths <- seq(from = center_y_min, 
-                            to = min(open_arms_data$y_m, na.rm = TRUE), 
-                            by = -2)
+  open_positive_depths <- safe_seq(
+    from = center_y_max,
+    to = max(open_arms_data$y_m, na.rm = TRUE),
+    by = 2
+  )
+  open_negative_depths <- safe_seq(
+    from = center_y_min,
+    to = min(open_arms_data$y_m, na.rm = TRUE),
+    by = -2
+  )
   
   # Create bands for open arms
   open_bands <- bind_rows(
-    tibble(
-      depth_start = head(open_positive_depths, -1),
-      depth_end = tail(open_positive_depths, -1),
-      x_min = min(open_arms_data$x_m, na.rm = TRUE),
-      x_max = max(open_arms_data$x_m, na.rm = TRUE)
-    ),
-    tibble(
-      depth_start = head(open_negative_depths, -1),
-      depth_end = tail(open_negative_depths, -1),
-      x_min = min(open_arms_data$x_m, na.rm = TRUE),
-      x_max = max(open_arms_data$x_m, na.rm = TRUE)
-    )
+    make_open_bands(open_positive_depths, open_x_min, open_x_max),
+    make_open_bands(open_negative_depths, open_x_min, open_x_max)
   ) %>%
     mutate(
       depth_low = pmin(depth_start, depth_end),
@@ -478,27 +534,21 @@ create_complete_arm_grids <- function(data) {
     select(-depth_low, -depth_high)
   
   # For closed arms (along x-axis)
-  closed_positive_depths <- seq(from = center_x_max, 
-                              to = max(closed_arms_data$x_m, na.rm = TRUE), 
-                              by = 2)
-  closed_negative_depths <- seq(from = center_x_min, 
-                              to = min(closed_arms_data$x_m, na.rm = TRUE), 
-                              by = -2)
+  closed_positive_depths <- safe_seq(
+    from = center_x_max,
+    to = max(closed_arms_data$x_m, na.rm = TRUE),
+    by = 2
+  )
+  closed_negative_depths <- safe_seq(
+    from = center_x_min,
+    to = min(closed_arms_data$x_m, na.rm = TRUE),
+    by = -2
+  )
   
   # Create bands for closed arms
   closed_bands <- bind_rows(
-    tibble(
-      depth_start = head(closed_positive_depths, -1),
-      depth_end = tail(closed_positive_depths, -1),
-      y_min = min(closed_arms_data$y_m, na.rm = TRUE),
-      y_max = max(closed_arms_data$y_m, na.rm = TRUE)
-    ),
-    tibble(
-      depth_start = head(closed_negative_depths, -1),
-      depth_end = tail(closed_negative_depths, -1),
-      y_min = min(closed_arms_data$y_m, na.rm = TRUE),
-      y_max = max(closed_arms_data$y_m, na.rm = TRUE)
-    )
+    make_closed_bands(closed_positive_depths, closed_y_min, closed_y_max),
+    make_closed_bands(closed_negative_depths, closed_y_min, closed_y_max)
   ) %>%
     mutate(
       depth_low = pmin(depth_start, depth_end),
