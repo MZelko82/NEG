@@ -30,6 +30,7 @@ if(cores_detected > chains_req){
   cores_req <- 1
 }
 cores_req
+future::plan(future::multisession, workers = cores_req)  # run chains in parallel
 set.seed(42)
 ```
 
@@ -80,21 +81,21 @@ model_CP1 = list(
   ~ 0 + time,
   ~ 0
 )
-#fitmodel_CP1 = mcp(model_CP1, family = binomial(), sample = FALSE, cores = cores_req, chains = chains_req)
-#str(fitmodel_CP1$pars, vec.len = 99)  # Compact display
+#fitmodel_CP1 = mcp(model_CP1, family = binomial(), sample = FALSE, chains = chains_req)
+#mcp_pars(fitmodel_CP1)
 #summary(fitmodel_CP1)
 ```
 
 ## Optional: Build Priors (can aid in model fitting; however defaults are usually sufficient)
 ```{r echo=FALSE, message=FALSE}
 # prior_CP1 = list(
-#     int_1 = "dnorm(0, 4)", # Intercept: constrained to zero
+#     Intercept_1 = "dnorm(0, 4)", # Intercept: constrained to zero
 #     cp_1 =  "dirichlet(1)", # First change point: uniform over the x-range
 #     time_2 = "dnorm(0, 0.5)" # First slope: positive only, moderate scale if 'time' is z-scored or 0–1
 #     cp_2 = "dirichlet(1)"
 #     cp_2 = "dirichlet(1)"
 # )
-# empty_manual_CP1 = mcp(model_CP1, family = binomial(), prior=prior_CP1, sample = FALSE, cores = cores_req, chains = chains_req)
+# empty_manual_CP1 = mcp(model_CP1, family = binomial(), prior=prior_CP1, sample = FALSE, chains = chains_req)
 # str(empty_manual_CP1$prior, vec.len = 99)
 # summary(empty_manual_CP1)
 ```
@@ -103,7 +104,7 @@ model_CP1 = list(
 ```{r}
 # prior_manual_CP1 = mcp(model_CP1, family = binomial(), data = test_1_phase, 
 #                        #prior=prior_CP1, 
-#                        sample = "prior", cores = cores_req, chains = chains_req)
+#                        sample = "prior", chains = chains_req)
 
 # # Plot prior_manual_CP1
 # plot(prior_manual_CP1, lines = 100)
@@ -111,9 +112,9 @@ model_CP1 = list(
 
 # Fit Single Phase Prior Model on Single Phase Data
 ```{r}
-test_manual_CP1 = mcp(model_CP1, family = binomial(), adapt = 10000, iter = 20000, 
+test_manual_CP1 = mcp(model_CP1, family = binomial(), warmup = 10000, iter = 20000, 
                       #prior = prior_CP1,
-                      data = test_1_phase,  sample = "both", cores = cores_req, chains = chains_req)
+                      data = test_1_phase,  sample = "both", chains = chains_req)
 plot(test_manual_CP1, lines = 100)
 plot(test_manual_CP1, prior = TRUE) # Prior Predictive Check
 summary(test_manual_CP1)
@@ -133,16 +134,16 @@ model_CP2= list(
   ~ 0 + time,
   ~ 0
 )
-# fitmodel_CP2 = mcp(model_CP2, family = binomial(), sample = FALSE, cores = cores_req, chains = chains_req)
-# str(fitmodel_CP2$pars, vec.len = 99)  # Compact display
+# fitmodel_CP2 = mcp(model_CP2, family = binomial(), sample = FALSE, chains = chains_req)
+# mcp_pars(fitmodel_CP2)
 #summary(fitmodel_CP2)
 ```
 
 ## Optional: Build Priors (can aid in model fitting; however defaults are usually sufficient)
 ```{r}
 # prior_CP2 <- list(
-#   #int_1 = "dnorm(-4, 3) T(-4, 0)", # Intercept: constrained to zero
-#   int_1 = "dnorm(-4, 1) T(-4,)", # Intercept: constrained to zero
+#   #Intercept_1 = "dnorm(-4, 3) T(-4, 0)", # Intercept: constrained to zero
+#   Intercept_1 = "dnorm(-4, 1) T(-4,)", # Intercept: constrained to zero
 #   time_1 = "dnorm(0, 0.2) T(0,)", # First slope: positive only, moderate scale if 'time' is z-scored or 0–1
 #   #cp_1   = "dirichlet(1)", # First change point: uniform over the x-range
 #   #cp_2   = "dirichlet(3)", # Second change point: constrained to occur after cp_1
@@ -150,14 +151,14 @@ model_CP2= list(
 #   #cp_3 = "dirichlet(3)"
 # )
 
-# empty_manual_CP2 = mcp(model_CP2, family = binomial(), prior=prior_CP2, sample = FALSE, par_x = "time", cores = cores_req, chains = chains_req)
+# empty_manual_CP2 = mcp(model_CP2, family = binomial(), prior=prior_CP2, sample = FALSE, par_x = "time", chains = chains_req)
 # str(empty_manual_CP2$prior, vec.len = 99)
 # summary(empty_manual_CP2)
 ```
 
 ## Optional: Prior Predictive Check (only required if priors are built)
 ```{r}
-# prior_manual_CP2 = mcp(model_CP2, family = binomial(), data = test_2_phase, prior=prior_CP2, sample = "prior", cores = cores_req, chains = chains_req)
+# prior_manual_CP2 = mcp(model_CP2, family = binomial(), data = test_2_phase, prior=prior_CP2, sample = "prior", chains = chains_req)
 
 # Plot prior_manual_CP1
 # plot(prior_manual_CP2, lines = 100)
@@ -165,9 +166,9 @@ model_CP2= list(
 
 # Fit Dual Phase Prior Model on Dual Phase Data
 ```{r}
-test_manual_CP2 = mcp(model_CP2, family = binomial(), adapt = 10000, iter = 20000, data = test_2_phase, 
+test_manual_CP2 = mcp(model_CP2, family = binomial(), warmup = 10000, iter = 20000, data = test_2_phase, 
                       #prior=prior_CP2, # use priors if required
-                      sample = "both", cores = cores_req, chains = chains_req)
+                      sample = "both", chains = chains_req)
 plot(test_manual_CP2, lines = 100)
 plot(test_manual_CP2, lines = 100, prior = TRUE) # Prior Predictive Check
 summary(test_manual_CP2)
@@ -181,9 +182,9 @@ test_manual_CP2 parameters show the first growth phase between change point at 1
 # Compare Models Fit for test data
 ## Fit Single Phase model onto Dual Phase data
 ```{r}
-test_manual_CP1.2 = mcp(model_CP1, family = binomial(), adapt = 10000, iter = 20000, data = test_2_phase, 
+test_manual_CP1.2 = mcp(model_CP1, family = binomial(), warmup = 10000, iter = 20000, data = test_2_phase, 
                         #prior=prior_CP1, # use priors if required
-                        sample = "both", cores = cores_req, chains = chains_req)
+                        sample = "both", chains = chains_req)
 plot(test_manual_CP1.2, lines = 100)
 plot(test_manual_CP1.2, lines = 100, prior = TRUE) # Prior Predictive Check
 summary(test_manual_CP1.2)
@@ -203,9 +204,9 @@ Loo comparison shows test_manual_CP2 outperforms test_manual_CP2.1.
 
 ## Fit Dual Phase Model on Single Phase Data
 ```{r}
-test_manual_CP2.1 = mcp(model_CP2, family = binomial(), adapt = 10000, iter = 20000, data = test_1_phase, 
+test_manual_CP2.1 = mcp(model_CP2, family = binomial(), warmup = 10000, iter = 20000, data = test_1_phase, 
                         #prior=prior_CP2, # use priors if required
-                        sample = "both", cores = cores_req, chains = chains_req)
+                        sample = "both", chains = chains_req)
 plot(test_manual_CP2.1, lines = 100)
 plot(test_manual_CP2.1, lines = 100, prior = TRUE)
 summary(test_manual_CP2.1)
