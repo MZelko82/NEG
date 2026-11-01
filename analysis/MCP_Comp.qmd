@@ -15,6 +15,7 @@ format:
 ```{r}
 library(tidyverse)
 library(mcp)
+stopifnot(packageVersion("mcp") >= "0.4.0") # warmup = requires mcp 0.4.0 or later
 library(loo)
 library(brms)
 # library(httpgd) # For browser-based visualisations in VS Code forks
@@ -138,7 +139,7 @@ plot_pars(test_manual_CP1, prior = TRUE) # Check Prior Distributions
 plot_pars(test_manual_CP1) # Check Posterior Distributions
 ```
 
-test_manual_CP1 parameters and plot show initial growth between first change point at 3 seconds and second change point at 46 seconds. This is followed by a plateau for the remainder of the time.
+test_manual_CP1 fits one growth segment, which bends at about 4 and 46 seconds, followed by a plateau for the remaining time.
 
 # Build Dual Phase with Plateau Model
 ```{r}
@@ -199,7 +200,7 @@ plot_pars(test_manual_CP2, prior = TRUE) # Check Prior Distributions
 plot_pars(test_manual_CP2) # Check Posterior Distributions
 ```
 
-test_manual_CP2 parameters show the first growth phase between change point at 1 second and change point 2 at 34.8 seconds. This is followed by a plateau to change point 3 at 164.75 before the second growth phase which lasts until change point 4 at 196.02.
+test_manual_CP2 fits two growth segments separated by a plateau, with bends at about 2, 35, 166 and 195 seconds. These are where the fitted straight segments bend, not exact start and end times for exploration, because the simulated curves are smooth.
 
 # Compare Models Fit for test data
 ## Fit Single Phase model onto Dual Phase data
@@ -222,14 +223,14 @@ plot_pars(test_manual_CP1.2, prior = TRUE) # Check Prior Distributions
 plot_pars(test_manual_CP1.2) # Check Posterior Distributions
 ```
 
-test_manual_CP1.2 parameters show the first growth phase after change point 1 at 1 second growing continuously until change point 2 at 300 seconds.
+test_manual_CP1.2 does not recover the two growth phases. Its change points fall at about 161 and 197 seconds, so it fits only the second rise.
 
 ## Loo compare Dual Phase Data Fits
 ```{r}
 loo_compare(loo(test_manual_CP2), loo(test_manual_CP1.2))
 ```
 
-Loo comparison shows test_manual_CP2 outperforms test_manual_CP2.1.
+Loo comparison strongly favours test_manual_CP2 over test_manual_CP1.2 (elpd difference about 9700, SE about 540).
 
 ## Fit Dual Phase Model on Single Phase Data
 ```{r}
@@ -251,11 +252,11 @@ plot_pars(test_manual_CP2.1, prior = TRUE)
 loo_compare(loo(test_manual_CP1), loo(test_manual_CP2.1))
 ```
 
-test_manual_CP2.1 parameters show large variance in change points 2,3, and 4 with overlapping intervals.
+test_manual_CP2.1 estimates change point 2 precisely at about 46 seconds. Change points 3 and 4 are poorly determined, with wide overlapping intervals (about 51–284 and 65–297 seconds).
 
 ## Loo compare Single Phase Data Fits
 ```{r}
 loo_compare(loo(test_manual_CP1), loo(test_manual_CP2.1))
 ```
 
-Loo comparison shows test_manual_CP1 outperforms test_manual_CP2.1.
+Loo comparison gives a small difference in favour of test_manual_CP1 (elpd difference about 3.4, SE about 1.5). Both fits are below the ESS > 1000 criterion, so this comparison is provisional. If it holds after longer sampling, the single-phase model is preferred because it has the higher elpd and is also simpler.

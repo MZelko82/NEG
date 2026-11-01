@@ -3,5 +3,6 @@ _extensions/
 analysis/MCP_Comp_wb.qmd
 analysis/MCP_Comp_wb2.qmd
 analysis/GAM_CP.qmd
+analysis/MCP_Comp.html
 testing/
 /pub
